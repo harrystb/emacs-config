@@ -1,0 +1,158 @@
+#+TITLE: Emacs settings
+#+AUTHOR: Harrison St Baker
+#+EMAIL: harry.stbaker@gmail.com
+* Package repo configuration
+  Add the melpa repository and make sure use-package is installed
+#+BEGIN_SRC emacs-lisp
+(require 'package)
+(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
+(package-initialize)
+
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(eval-when-compile
+  (require 'use-package))
+#+END_SRC
+
+* Basic startup default changes
+  Remove splash screen and echo area on startup
+#+BEGIN_SRC emacs-lisp
+(setq inhibit-startup-message t
+      inhibit-startup-echo-area-message t)
+#+END_SRC
+
+* Evil package (VIM Emulation)
+#+BEGIN_SRC emacs-lisp
+(use-package evil
+  :ensure t
+  :config
+
+  (evil-mode 1)
+  (use-package evil-org
+    :ensure t
+    :config
+    (evil-org-set-key-theme
+     '(textobjects insert navigation additional shift todo heading))
+    (add-hook 'org-mode-hook (lambda () (evil-org-mode))))
+
+  (use-package powerline-evil
+    :ensure t
+    :config
+    (powerline-evil-vim-color-theme)))
+#+END_SRC
+
+* ISpell package (spell checking)
+#+BEGIN_SRC emacs-lisp
+(use-package ispell
+  :ensure t
+  :bind
+  (("C-c w" . 'ispell-word)
+   ("C-c r" . 'ispell-region)))
+#+END_SRC
+
+* Projectile package (project navigation)
+#+BEGIN_SRC emacs-lisp
+(use-package projectile
+  :ensure t
+  :config
+  (projectile-mode +1)
+  (setq projectile-project-search-path '("~/dev"))
+  :bind
+  (("C-c p" . 'projectile-command-map)))
+#+END_SRC
+
+* Magit (git in emacs)
+#+BEGIN_SRC emacs-lisp
+(use-package magit
+  :ensure t)
+#+END_SRC
+
+* Treemacs package (folder display and navigation)
+#+BEGIN_SRC emacs-lisp
+(use-package treemacs
+  :ensure t
+  :config
+  (use-package treemacs-evil
+    :ensure t)
+  (use-package treemacs-magit
+    :ensure t)
+  (use-package treemacs-projectile
+    :ensure t)
+  :bind
+  (:map global-map
+        ("M-0" . treemacs-select-window)
+	("C-x t 1"   . treemacs-delete-other-windows)
+        ("C-x t t"   . treemacs)
+        ("C-x t B"   . treemacs-bookmark)
+        ("C-x t C-t" . treemacs-find-file)
+        ("C-x t M-t" . treemacs-find-tag)))
+#+END_SRC
+
+* C# related packages
+#+BEGIN_SRC emacs-lisp
+(use-package omnisharp
+  :ensure t
+  :config
+  (add-hook 'csharp-mode-hook 'omnisharp-mode)
+  (use-package company
+    :ensure t
+    :config
+    (add-to-list 'company-backends 'company-omnisharp)
+    (add-hook 'csharp-mode-hook 'company-mode))
+  (use-package flycheck
+    :ensure t
+    :config
+    (add-hook 'csharp-mode-hook 'flycheck-mode))
+  (setq indent-tabs-mode nil)
+  (setq c-syntactic-indentation t)
+  (setq c-basic-offset 4)
+  (setq tab-width 4)
+  (setq evil-shift-width 4)
+  (electric-pair-local-mode 1)
+  :bind
+  (;("C-c r r" . omnisharp-run-code-action-refactoring)
+   ("C-c C-c" . 'recompile)))
+#+END_SRC
+
+* Colour theme - dark
+#+BEGIN_SRC emacs-lisp
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(custom-enabled-themes (quote (misterioso)))
+ '(package-selected-packages (quote (use-package))))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
+#+END_SRC
+* Custom Keybindings
+** Increment or Decrement number at point
+#+BEGIN_SRC emacs-lisp
+(defun my-increment-number-decimal (&optional arg)
+  "Increment the number forward from point by 'arg'."
+  (interactive "p*")
+  (save-excursion
+    (save-match-data
+      (let (inc-by field-width answer)
+        (setq inc-by (if arg arg 1))
+        (skip-chars-backward "0123456789")
+        (when (re-search-forward "[0-9]+" nil t)
+          (setq field-width (- (match-end 0) (match-beginning 0)))
+          (setq answer (+ (string-to-number (match-string 0) 10) inc-by))
+          (when (< answer 0)
+            (setq answer (+ (expt 10 field-width) answer)))
+          (replace-match (format (concat "%0" (int-to-string field-width) "d")
+                                 answer)))))))
+(defun my-decrement-number-decimal (&optional arg)
+  (interactive "p*")
+  (my-increment-number-decimal (if arg (- arg) -1)))
+(global-set-key (kbd "C-<kp-add>") 'my-increment-number-decimal)
+(global-set-key (kbd "C-<kp-subtract>") 'my-decrement-number-decimal)
+#+END_SRC
