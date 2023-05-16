@@ -54,13 +54,23 @@
 
 * Projectile package (project navigation)
 #+BEGIN_SRC emacs-lisp
-(use-package projectile
-  :ensure t
-  :config
-  (projectile-mode +1)
-  (setq projectile-project-search-path '("~/dev"))
-  :bind
-  (("C-c p" . 'projectile-command-map)))
+  (use-package helm
+    :ensure t
+    :config
+      (helm-mode 1)
+      (setq helm-ff-file-name-history-recentf t)
+  )
+  (use-package projectile
+    :ensure t
+    :after helm
+    :config
+    (projectile-mode +1)
+    (setq projectile-project-search-path '("~/dev"))
+    (setq-default projectile-completion-system 'helm)
+    (projectile-register-project-type 'gitea '(".gitea")
+                      :compile "RHOST=hts-nms1 gmake install")
+    :bind
+    (("C-c p" . 'projectile-command-map)))
 #+END_SRC
 
 * Magit (git in emacs)
@@ -71,23 +81,24 @@
 
 * Treemacs package (folder display and navigation)
 #+BEGIN_SRC emacs-lisp
-(use-package treemacs
-  :ensure t
-  :config
-  (use-package treemacs-evil
-    :ensure t)
-  (use-package treemacs-magit
-    :ensure t)
-  (use-package treemacs-projectile
-    :ensure t)
-  :bind
-  (:map global-map
-        ("M-0" . treemacs-select-window)
-	("C-x t 1"   . treemacs-delete-other-windows)
-        ("C-x t t"   . treemacs)
-        ("C-x t B"   . treemacs-bookmark)
-        ("C-x t C-t" . treemacs-find-file)
-        ("C-x t M-t" . treemacs-find-tag)))
+  (add-to-list 'image-types 'svg)
+  (use-package treemacs
+    :ensure t
+    :config
+    (use-package treemacs-evil
+      :ensure t)
+    (use-package treemacs-magit
+      :ensure t)
+    (use-package treemacs-projectile
+      :ensure t)
+    :bind
+    (:map global-map
+	  ("M-0" . treemacs-select-window)
+	  ("C-x t 1"   . treemacs-delete-other-windows)
+	  ("C-x t t"   . treemacs)
+	  ("C-x t B"   . treemacs-bookmark)
+	  ("C-x t C-t" . treemacs-find-file)
+	  ("C-x t M-t" . treemacs-find-tag)))
 #+END_SRC
 
 * Rust Packages
