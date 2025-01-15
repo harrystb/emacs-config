@@ -18,9 +18,9 @@
  ;; If you edit it by hand, you could mess it up, so be careful.
  ;; Your init file should contain only one such instance.
  ;; If there is more than one, they won't work right.
- '(custom-enabled-themes '(misterioso))
+ '(custom-enabled-themes '(tango-dark))
  '(package-selected-packages
-   '(lsp-dart flx-ido treemacs treemacs-evil treemacs-magit treemacs-projectile use-package powerline)))
+   '(lsp-treemacs flycheck lsp-dart flx-ido treemacs treemacs-evil treemacs-magit treemacs-projectile use-package powerline)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
