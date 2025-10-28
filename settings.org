@@ -16,43 +16,110 @@
   (require 'use-package))
 #+END_SRC
 
-* Basic startup default changes
-  Remove splash screen and echo area on startup
+* Default Settings, which-key and basic key remaps
+** Remove splash screen and echo area on startup
 #+BEGIN_SRC emacs-lisp
 (setq inhibit-startup-message t
       inhibit-startup-echo-area-message t)
 #+END_SRC
-
-* Evil package (VIM Emulation)
+** Enable which-key on pause
 #+BEGIN_SRC emacs-lisp
-(use-package evil
-  :ensure t
-  :config
-
-  (evil-mode 1)
-  (use-package evil-org
-    :ensure t
-    :config
-    (evil-org-set-key-theme
-     '(textobjects insert navigation additional shift todo heading))
-    (add-hook 'org-mode-hook (lambda () (evil-org-mode))))
-
-  (use-package powerline-evil
-    :ensure t
-    :config
-    (powerline-evil-vim-color-theme)))
+  (which-key-mode 1)
+  (setq which-key-side-window-location '(right, bottom))
+#+END_SRC
+** Remap basic keys
+*** Evaluate commands
+#+BEGIN_SRC emacs-lisp
+  (setq hb-eval-map (make-sparse-keymap))
+  (define-key hb-eval-map "r" '("Evaluate region" . eval-region))
+  (define-key hb-eval-map "s" '("Evaluate Last Symbolic Expression" . eval-last-sexp))
+#+END_SRC
+*** Buffer commands
+#+BEGIN_SRC emacs-lisp
+  (setq hb-buffer-map (make-sparse-keymap))
+  (define-key hb-buffer-map "b" '("Switch to buffer" . switch-to-buffer))
+  (define-key hb-buffer-map "l" '("List buffers" . list-buffers))
+#+END_SRC
+*** Bookmark commands and custom functions
+#+BEGIN_SRC emacs-lisp
+  (defun hb-bookmark-this-file ()
+    "Add this file or update location to the bookmarks list"
+    (interactive)
+    (bookmark-set (frame-parameter nil 'name) nil))
+  (defun hb-unbookmark-this-file ()
+    "Remove this file from the bookmarks list"
+    (interactive)
+    (bookmark-delete (frame-parameter nil 'name)))
+  (defun hb-bookmarks-clear ()
+    "Cleart the bookmarks list"
+    (interactive)
+    (bookmark-delete-all))
+  (defun hb-bookmark-1 ()
+    "Jump to bookmark 1 buffer or open if not already"
+    (interactive)
+    (let bm (nth 0 'bookmark-alist)))
+  (setq hb-bookmark-map (make-sparse-keymap))
+  (define-key hb-bookmark-map "a" '("Add to bookmarks" . hb-bookmark-this-file))
+  (define-key hb-bookmark-map "d" '("Remove from bookmarks" . hb-unbookmark-this-file))
+  (define-key hb-bookmark-map "c" '("Clear bookmarks" . hb-booksmarks-clear))
+  (define-key hb-bookmark-map "m" '("List bookmarks" . list-bookmarks))
 #+END_SRC
 
-* ISpell package (spell checking)
+
+* Add on packages
+** UI Changes
+*** Colour theme Doom (dark)
 #+BEGIN_SRC emacs-lisp
-(use-package ispell
-  :ensure t
-  :bind
-  (("C-c w" . 'ispell-word)
-   ("C-c r" . 'ispell-region)))
+  (use-package doom-themes
+    :ensure t
+    :custom
+    ;; Global settings (defaults)
+    (doom-themes-enable-bold t)   ; if nil, bold is universally disabled
+    (doom-themes-enable-italic t) ; if nil, italics is universally disabled
+    ;; for treemacs users
+    (doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
+    :config
+    (load-theme 'doom-one t)
+
+    ;; Enable flashing mode-line on errors
+    (doom-themes-visual-bell-config)
+    ;; Enable custom neotree theme (nerd-icons must be installed!)
+    (doom-themes-neotree-config)
+    ;; or for treemacs users
+    (doom-themes-treemacs-config)
+    ;; Corrects (and improves) org-mode's native fontification.
+    (doom-themes-org-config))
+#+END_SRC
+*** Mode line
+#+BEGIN_SRC emacs-lisp
+  (use-package doom-modeline
+    :ensure t
+    :init (doom-modeline-mode 1))
 #+END_SRC
 
-* Projectile package (project navigation)
+** Key binding changes
+*** Evil package (VIM Emulation)
+#+BEGIN_SRC emacs-lisp
+  (use-package evil
+    :ensure t
+    :config
+    (evil-mode 1)
+    (evil-set-leader 'normal (kbd "SPC"))
+    (evil-define-key 'normal 'global (kbd "<leader>p") '("Projectile commands" . projectile-command-map))
+    (evil-define-key 'normal 'global (kbd "<leader>b") (cons "Evaluate commands" hb-buffer-map))
+    (evil-define-key 'normal 'global (kbd "<leader>e") (cons "Evaluate commands" hb-eval-map))
+    (evil-define-key 'normal 'global (kbd "<leader>m") (cons "Bookmark commands" hb-bookmark-map))
+    (evil-define-key 'normal 'global (kbd "<leader>ff") 'helm-find-files)
+    (use-package evil-org
+      :ensure t
+      :config
+      (evil-org-set-key-theme
+       '(textobjects insert navigation additional shift todo heading))
+      (add-hook 'org-mode-hook (lambda () (evil-org-mode))))
+    )
+#+END_SRC
+** Navigation
+*** Project navigation
 #+BEGIN_SRC emacs-lisp
   (use-package helm
     :ensure t
@@ -70,18 +137,10 @@
     (projectile-register-project-type 'gitea '(".gitea")
                       :compile "RHOST=hts-nms1 gmake install")
     :bind
-    (("C-c p" . 'projectile-command-map)))
+    (("<leader> p" . 'projectile-command-map)))
 #+END_SRC
-
-* Magit (git in emacs)
+*** Treemacs package (folder display and navigation)
 #+BEGIN_SRC emacs-lisp
-(use-package magit
-  :ensure t)
-#+END_SRC
-
-* Treemacs package (folder display and navigation)
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'image-types 'svg)
   (use-package treemacs
     :ensure t
     :config
@@ -101,59 +160,81 @@
 	  ("C-x t M-t" . treemacs-find-tag)))
 #+END_SRC
 
-* Rust Packages
-** rust mode
+** Programming
+*** LSP (Built in eglot)
+#+BEGIN_SRC emacs-lisp
+  (use-package eglot
+    :bind
+    (:map global-map
+	("<leader><leader>a" . eglot-code-actions)
+	("<leader><leader>r" . eglot-rename)
+	))
+#+END_SRC
+*** Annotations
+#+BEGIN_SRC emacs-lisp
+  (use-package flycheck
+    :ensure t
+    :bind
+    (:map global-map
+	("<leader><leader>l" . flycheck-list-errors)
+		  ))
+#+END_SRC
+*** Rust
 #+BEGIN_SRC emacs-lisp
   (use-package rust-mode
-      :ensure
+    :ensure
+    :config
+    (add-hook 'rust-mode-hook (lambda () (setq indent-tabs-mode nil)))
+    (add-hook 'rust-mode-hook 'electric-pair-mode)
+    (add-hook 'rust-mode-hook 'flycheck-mode)
+    (add-hook 'rust-mode-hook 'eglot-ensure)
+    (setq rust-format-on-save t)
+    (use-package flycheck
+      :ensure t
       :config
-	(add-hook 'rust-mode-hook (lambda () (setq indent-tabs-mode nil)))
-	(add-hook 'rust-mode-hook 'electric-pair-mode)
-	(setq rust-format-on-save t)
-	(use-package flycheck
-	    :ensure t
-	    :config
-	    (add-hook 'rust-mode-hook 'flycheck-mode)
-	    (add-hook 'rust-mode-hook 'lsp))
-      :bind
-      (:map rust-mode-map
-            ("C-c C-c C-r" . rust-run)
-	    ("C-l j" . lsp-ui-imenu)
-	    ("C-l ?" . lsp-find-references)
-	    ("C-c C-c l" . flycheck-list-errors)
-	    ("C-c C-c a" . lsp-execute-code-action)
-	    ("C-c C-c r" . lsp-rename)
-	    ("C-c C-c q" . lsp-workspace-restart)
-	    ("C-c C-c Q" . lsp-workspace-shutdown)
-	    ("C-c C-c s" . lsp-rust-analyzer-status))
+      (add-hook 'rust-mode-hook 'flycheck-mode)
+      (add-hook 'rust-mode-hook 'eglot-ensure))
+    :bind
+    (:map rust-mode-map
+	  ("<leader> <leader> C-r" . rust-run)
+	  )
     )
 
 #+END_SRC
-** lsp-mode
+*** Flutter/Dart Packages
 #+BEGIN_SRC emacs-lisp
-(use-package lsp-mode
-  :ensure
-  :commands lsp
-  :custom
-  ;; what to use when checking on-save. "check" is default, I prefer clippy
-  (lsp-rust-analyzer-cargo-watch-command "clippy")
-  (lsp-eldoc-render-all t)
-  (lsp-idle-delay 0.6)
-  (lsp-rust-analyzer-server-display-inlay-hints t)
-  :config
-  (add-hook 'lsp-mode-hook 'lsp-ui-mode)
-  (define-key lsp-mode-map (kbd "C-c l") lsp-command-map)) 
-
-(use-package lsp-ui
-  :ensure
-  :commands lsp-ui-mode
-  :custom
-  (lsp-ui-peek-always-show t)
-  (lsp-ui-sideline-show-hover t)
-  (lsp-ui-doc-enable nil))
+  (use-package dart-mode
+    :ensure t
+    :hook
+    (dart-mode . flutter-test-mode)
+    (dart-mode . eglot-ensure)
+    (dart-mode . electric-pair-mode))
+  (use-package flutter
+    :ensure t
+    :after dart-mode
+    :config 
+    (defun my-flutter-run-or-hot-reload ()
+      "Start `flutter run` or hot-reload if already running."
+      (interactive)
+      (if (flutter--running-p)
+  	(flutter-hot-reload)
+        (flutter-run "-d windows")))
+    (defun my-flutter-before-save ()
+      (lsp-format-buffer))
+    (defun my-flutter-on-save-hot-reload ()
+      "Start `flutter run` or hot-reload if already running."
+      (lsp-format-buffer)
+      (if (flutter--running-p)
+  	(flutter-hot-reload)
+        nil))
+    (add-hook 'flutter-test-mode-hook (lambda () (add-hook 'after-save-hook 'my-flutter-on-save-hot-reload nil 'make-it-local)))
+    (add-hook 'flutter-test-mode-hook (lambda () (add-hook 'before-save-hook 'my-flutter-before-save nil 'make-it-local)))
+    :bind (:map dart-mode-map
+  	      ("C-M-x" . #'my-flutter-run-or-hot-reload)))
+  (use-package yaml-mode :ensure t)
 #+END_SRC
-* Auto completion and snippets (Company/Yasnippet)
-** Extra functions to be linked source: [[https://robert.kra.hn/posts/2021-02-07_rust-with-emacs/#:~:text=%20Configuring%20Emacs%20for%20Rust%20development%20%201,order%20to%20setup%20debugging%20support%20for...%20More%20]]
+** Auto completion and snippets (Company/Yasnippet)
+*** Extra functions to be linked source: [[https://robert.kra.hn/posts/2021-02-07_rust-with-emacs/#:~:text=%20Configuring%20Emacs%20for%20Rust%20development%20%201,order%20to%20setup%20debugging%20support%20for...%20More%20]]
 #+BEGIN_SRC emacs-lisp
 (defun company-yasnippet-or-completion ()
   (interactive)
@@ -182,7 +263,7 @@
             (company-complete-common)
           (indent-for-tab-command)))))
 #+END_SRC
-** Company
+*** Company (Completions)
 #+BEGIN_SRC emacs-lisp
 (use-package company
     :ensure
@@ -201,71 +282,19 @@
     :config
     (add-hook 'rust-mode-hook 'company-mode))
 #+END_SRC
-
-** Yasnippet
-#+BEGIN_SRC emacs-lisp
-(use-package yasnippet
-  :ensure
-  :config
-  (yas-reload-all)
-  (add-hook 'prog-mode-hook 'yas-minor-mode)
-  (add-hook 'text-mode-hook 'yas-minor-mode))
-#+END_SRC
-* Flutter/Dart Packages
-#+BEGIN_SRC emacs-lisp
-	  (use-package dart-mode
-    :ensure t
-	      :hook
-                 (dart-mode . flutter-test-mode)
-                 (dart-mode . lsp)
-                 (dart-mode . electric-pair-mode)
-	      :config
-		  (use-package lsp-dart :after lsp :ensure t)
-		  (use-package lsp-treemacs :after lsp :ensure t))
-
-	      (use-package flutter
-		  :ensure t
-		  :after dart-mode
-		  :config 
-		      (defun my-flutter-run-or-hot-reload ()
-		      "Start `flutter run` or hot-reload if already running."
-		      (interactive)
-		      (if (flutter--running-p)
-		      (flutter-hot-reload)
-		      (flutter-run "-d windows")))
-		      (defun my-flutter-before-save ()
-		      (lsp-format-buffer))
-		      (defun my-flutter-on-save-hot-reload ()
-		      "Start `flutter run` or hot-reload if already running."
-		      (lsp-format-buffer)
-		      (if (flutter--running-p)
-		      (flutter-hot-reload)
-		       nil))
-		      (add-hook 'flutter-test-mode-hook (lambda () (add-hook 'after-save-hook 'my-flutter-on-save-hot-reload nil 'make-it-local)))
-		      (add-hook 'flutter-test-mode-hook (lambda () (add-hook 'before-save-hook 'my-flutter-before-save nil 'make-it-local)))
-		  :bind (:map dart-mode-map
-		      ("C-M-x" . #'my-flutter-run-or-hot-reload)))
-
-	    (use-package yaml-mode :ensure t)
-#+END_SRC
-* Documentation
-** Mermaid JS
-#+BEGIN_SRC emacs-lisp
-(use-package mermaid-mode
-  :ensure t)
-#+END_SRC
-* Snippets & Templates
+*** Yasnippet (Snippets)
 #+BEGIN_SRC emacs-lisp
 (use-package yasnippet
   :ensure t
   :config
   (use-package yasnippet-snippets
     :ensure t)
-  (yas-global-mode t)
   (define-key yas-minor-mode-map (kbd "<tab>") nil)
   (define-key yas-minor-mode-map (kbd "C-'") #'yas-expand)
   (add-to-list #'yas-snippet-dirs "~/.emacs.d/snippets")
   (yas-reload-all)
+  (add-hook 'prog-mode-hook 'yas-minor-mode)
+  (add-hook 'text-mode-hook 'yas-minor-mode)
   (setq yas-prompt-functions '(yas-ido-prompt))
   (defun help/yas-after-exit-snippet-hook-fn ()
     (prettify-symbols-mode)
@@ -277,27 +306,33 @@
   :ensure t
   :config
   (setq templates-private-directory "~/.emacs.d/templates"))
-  
 #+END_SRC
 
-* Colour theme - dark
+
+** Extra functionality
+*** ISpell package (spell checking)
 #+BEGIN_SRC emacs-lisp
-(custom-set-variables
- ;; custom-set-variables was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- '(custom-enabled-themes (quote (misterioso)))
- '(package-selected-packages (quote (use-package))))
-(custom-set-faces
- ;; custom-set-faces was added by Custom.
- ;; If you edit it by hand, you could mess it up, so be careful.
- ;; Your init file should contain only one such instance.
- ;; If there is more than one, they won't work right.
- )
+(use-package ispell
+  :ensure t
+  :bind
+  (("<leader>sw" . 'ispell-word)
+   ("<leader>sr" . 'ispell-region)))
 #+END_SRC
-* Custom Keybindings
-** Increment or Decrement number at point
+*** Magit (git in emacs)
+#+BEGIN_SRC emacs-lisp
+  (use-package magit
+    :ensure t
+    :bind
+    (("<leader> g" . 'magit))
+  )
+#+END_SRC
+*** Mermaid JS Documentation extras (org mode)
+#+BEGIN_SRC emacs-lisp
+(use-package mermaid-mode
+  :ensure t)
+#+END_SRC
+** Custom Functions
+*** Increment or Decrement number at point
 #+BEGIN_SRC emacs-lisp
 (defun my-increment-number-decimal (&optional arg)
   "Increment the number forward from point by 'arg'."
