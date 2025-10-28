@@ -105,6 +105,7 @@
     :config
     (evil-mode 1)
     (evil-set-leader 'normal (kbd "SPC"))
+    (evil-set-leader 'visual (kbd "SPC"))
     (evil-define-key 'normal 'global (kbd "<leader>p") '("Projectile commands" . projectile-command-map))
     (evil-define-key 'normal 'global (kbd "<leader>b") (cons "Evaluate commands" hb-buffer-map))
     (evil-define-key 'normal 'global (kbd "<leader>e") (cons "Evaluate commands" hb-eval-map))
