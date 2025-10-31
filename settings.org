@@ -17,10 +17,11 @@
 #+END_SRC
 
 * Default Settings, which-key and basic key remaps
-** Remove splash screen and echo area on startup
+** Remove splash screen, menu bar  and echo area on startup
 #+BEGIN_SRC emacs-lisp
-(setq inhibit-startup-message t
-      inhibit-startup-echo-area-message t)
+  (setq inhibit-startup-message t
+        inhibit-startup-echo-area-message t)
+  (menu-bar-mode -1)
 #+END_SRC
 ** Enable which-key on pause
 #+BEGIN_SRC emacs-lisp
@@ -33,6 +34,8 @@
   (setq hb-eval-map (make-sparse-keymap))
   (define-key hb-eval-map "r" '("Evaluate region" . eval-region))
   (define-key hb-eval-map "s" '("Evaluate Last Symbolic Expression" . eval-last-sexp))
+  (define-key hb-eval-map "x" '("Execute Command" . execute-extended-command))
+  (setq help-char "")
 #+END_SRC
 *** Buffer commands
 #+BEGIN_SRC emacs-lisp
@@ -40,34 +43,139 @@
   (define-key hb-buffer-map "b" '("Switch to buffer" . switch-to-buffer))
   (define-key hb-buffer-map "l" '("List buffers" . list-buffers))
 #+END_SRC
-*** Bookmark commands and custom functions
+*** DONE Bookmark commands and custom functions
 #+BEGIN_SRC emacs-lisp
-  (defun hb-bookmark-this-file ()
-    "Add this file or update location to the bookmarks list"
+  (defvar hb-harpoon-list () "The list of buffers in the harpoon quick list")
+  (defun hb-harpoon-add ()
+    "Add this file to the harpoon list"
     (interactive)
-    (bookmark-set (frame-parameter nil 'name) nil))
-  (defun hb-unbookmark-this-file ()
-    "Remove this file from the bookmarks list"
+    (let ((filename ""))
+      (setq filename buffer-file-name)
+      (if filename
+  	(progn 
+  	  (if hb-harpoon-list
+  	      (unless (member filename hb-harpoon-list)
+  		(setq hb-harpoon-list (append hb-harpoon-list (list filename)))
+  		(message "File added")
+  		)
+  	    (setq hb-harpoon-list (list filename))
+  	    (message "File added")
+  	    )
+  	  (hb-harpoon-save-to-disk))
+        (message "Buffer is not a file")
+        )))
+  (defun hb-harpoon-remove ()
+    "Add this file to the harpoon list"
     (interactive)
-    (bookmark-delete (frame-parameter nil 'name)))
-  (defun hb-bookmarks-clear ()
-    "Cleart the bookmarks list"
+    (let ((filename ""))
+      (setq filename buffer-file-name)
+      (when (member filename hb-harpoon-list)
+        (setq hb-harpoon-list (delete filename hb-harpoon-list))
+        (message "File removed"))
+      ))
+  (defun hb-harpoon-clear ()
     (interactive)
-    (bookmark-delete-all))
-  (defun hb-bookmark-1 ()
-    "Jump to bookmark 1 buffer or open if not already"
+    (setq hb-harpoon-list ()))
+  (defun hb-harpoon-switch (n)
+    "Quick switch to harpoon buffer n"
+    (let (
+          (file (nth n hb-harpoon-list)))
+      (if file (find-file file) (message "Harpoon item %d not set" n))
+      ))
+  (defun hb-harpoon-list ()
+    "Show *Harpoon Buffers* buffer"
     (interactive)
-    (let bm (nth 0 'bookmark-alist)))
-  (setq hb-bookmark-map (make-sparse-keymap))
-  (define-key hb-bookmark-map "a" '("Add to bookmarks" . hb-bookmark-this-file))
-  (define-key hb-bookmark-map "d" '("Remove from bookmarks" . hb-unbookmark-this-file))
-  (define-key hb-bookmark-map "c" '("Clear bookmarks" . hb-booksmarks-clear))
-  (define-key hb-bookmark-map "m" '("List bookmarks" . list-bookmarks))
+    ;; Create or update harpoon buffer
+    (let ((buf (get-buffer-create "*Harpoon*")))
+      (switch-to-buffer buf)
+      (hb-harpoon-list-mode 1)
+      (insert ";; Harpoon Quick Switch List:\n")
+      (insert ";; Edit the buffer to rearrange the order if desired.\n")
+      (insert ";; <q> save and quit    <enter> switch to buffer\n")
+      (insert ";;  __________________________________________________\n\n")
+      (save-excursion 
+  	(dolist (file hb-harpoon-list)
+  	  (insert (concat file "\n"))))))
+
+  (defun hb-harpoon-load-from-buffer()
+    (save-excursion
+      (goto-char (point-min))
+      (setq hb-harpoon-list ())
+      (while (not (eobp))
+        (let ((filename (string-trim (thing-at-point 'line t))))
+  	(unless (or (not filename) (< (length filename) 2) (equal (substring filename 0 2) ";;"))
+  	  (if hb-harpoon-list
+  	      (unless (member filename hb-harpoon-list)
+  		(setq hb-harpoon-list (append hb-harpoon-list (list filename)))
+  		)
+  	    (setq hb-harpoon-list (list filename))
+  	    )))
+        (forward-line 1)
+        )
+      ))
+  (defvar hb-harpoon-data-file (concat user-emacs-directory "harpoon") "File that harpoon syncs with")
+  (defun hb-harpoon-load-from-disk()
+    (interactive)
+    (let ((buf (find-file-noselect hb-harpoon-data-file)))
+      (with-current-buffer buf
+        (hb-harpoon-load-from-buffer))
+      (kill-buffer buf)))
+  (defun hb-harpoon-save-to-disk()
+    (with-temp-buffer 
+      (dolist (file hb-harpoon-list)
+        (insert (concat file "\n")) 
+        )
+      (write-region (point-min) (point-max) hb-harpoon-data-file nil 0)))
+  (defun hb-harpoon-list-kill ()
+    (interactive)
+    (let ((buf (get-buffer-create "*Harpoon*")))
+      (with-current-buffer buf
+      (hb-harpoon-load-from-buffer)
+      (hb-harpoon-save-to-disk))
+      (kill-buffer buf)))
+  (defun hb-harpoon-list-switch ()
+    (interactive)
+    (let ((line (string-trim (thing-at-point 'line t))))
+      (unless (or (< (length line) 2) (equal (substring line 0 2) ";;"))
+        (find-file line)
+        (hb-harpoon-list-kill)
+        )
+      ))
+  (hb-harpoon-load-from-disk)
+  ;; Setup minor mode
+  (defvar hb-harpoon-list-map (make-sparse-keymap) "Keymap for harpoon list mode")
+  (define-key hb-harpoon-list-map "q" '("Save and close Harpoon list buffer" . hb-harpoon-list-kill))
+  (keymap-set hb-harpoon-list-map "<remap> <evil-record-macro>" 'hb-harpoon-list-kill)
+  (define-key hb-harpoon-list-map "<return>" '("Switch to buffer" . hb-harpoon-list-switch))
+  (keymap-set hb-harpoon-list-map "<remap> <evil-ret>" 'hb-harpoon-list-switch)
+  (define-minor-mode hb-harpoon-list-mode
+    "Toggles the harpoon list mode."
+    nil
+    :global nil
+    :lighter " harpoon"
+    :keymap hb-harpoon-list-map
+    (if hb-harpoon-list-mode
+        (message "Harpoon on")
+      (message "Harpoon off")))
+
+  (setq hb-harpoon-map (make-sparse-keymap))
+  (define-key hb-harpoon-map "a" '("Add file to harpoon" . hb-harpoon-add))
+  (define-key hb-harpoon-map "d" '("Remove file from harpoon" . hb-harpoon-remove))
+  (define-key hb-harpoon-map "c" '("Clear harpoon files" . hb-harpoon-clear))
+  (define-key hb-harpoon-map "m" '("List harpoon files" . hb-harpoon-list))
+  (define-key global-map (kbd "C-h") '("Quickswitch to buffer 1" . (lambda () (interactive) (hb-harpoon-switch 0))))
+  (define-key global-map (kbd "C-j") '("Quickswitch to buffer 2" . (lambda () (interactive) (hb-harpoon-switch 1))))
+  (define-key global-map (kbd "C-k") '("Quickswitch to buffer 3" . (lambda () (interactive) (hb-harpoon-switch 2))))
+  (define-key global-map (kbd "C-l") '("Quickswitch to buffer 4" . (lambda () (interactive) (hb-harpoon-switch 3))))
 #+END_SRC
-
-
 * Add on packages
 ** UI Changes
+*** Enable kitty protocol (pass through super on terminal)
+#+BEGIN_SRC emacs-lisp
+(use-package kkp
+  :config
+  (global-kkp-mode 1))
+#+END_SRC
 *** Colour theme Doom (dark)
 #+BEGIN_SRC emacs-lisp
   (use-package doom-themes
@@ -106,11 +214,16 @@
     (evil-mode 1)
     (evil-set-leader 'normal (kbd "SPC"))
     (evil-set-leader 'visual (kbd "SPC"))
+    (evil-define-key 'normal 'global (kbd "<leader>h") (cons "Help Commands" help-map))
     (evil-define-key 'normal 'global (kbd "<leader>p") '("Projectile commands" . projectile-command-map))
-    (evil-define-key 'normal 'global (kbd "<leader>b") (cons "Evaluate commands" hb-buffer-map))
+    (evil-define-key 'normal 'global (kbd "<leader>b") (cons "Buffer commands" hb-buffer-map))
     (evil-define-key 'normal 'global (kbd "<leader>e") (cons "Evaluate commands" hb-eval-map))
-    (evil-define-key 'normal 'global (kbd "<leader>m") (cons "Bookmark commands" hb-bookmark-map))
+    (evil-define-key 'normal 'global (kbd "<leader>m") (cons "Harpoon commands" hb-harpoon-map))
     (evil-define-key 'normal 'global (kbd "<leader>ff") 'helm-find-files)
+    (evil-define-key 'visual 'global (kbd "(") (lambda () (interactive) (insert-pair ?\( ?\)))
+      (kbd "{") (lambda () (interactive) (insert-pair ?\{ ?\}))
+      (kbd "[") (lambda () (interactive) (insert-pair ?\[ ?\]))
+      (kbd "<") (lambda () (interactive) (insert-pair ?\< ?\>)))
     (use-package evil-org
       :ensure t
       :config
