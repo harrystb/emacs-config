@@ -43,7 +43,7 @@
   (define-key hb-buffer-map "b" '("Switch to buffer" . switch-to-buffer))
   (define-key hb-buffer-map "l" '("List buffers" . list-buffers))
 #+END_SRC
-*** DONE Bookmark commands and custom functions
+*** Custom Harpoon functionality
 #+BEGIN_SRC emacs-lisp
   (defvar hb-harpoon-list () "The list of buffers in the harpoon quick list")
   (defun hb-harpoon-add ()
@@ -167,6 +167,10 @@
   (define-key global-map (kbd "C-j") '("Quickswitch to buffer 2" . (lambda () (interactive) (hb-harpoon-switch 1))))
   (define-key global-map (kbd "C-k") '("Quickswitch to buffer 3" . (lambda () (interactive) (hb-harpoon-switch 2))))
   (define-key global-map (kbd "C-l") '("Quickswitch to buffer 4" . (lambda () (interactive) (hb-harpoon-switch 3))))
+#+END_SRC
+**** Unbind competing keybinds from other modes
+#+BEGIN_SRC emacs-lisp
+  (define-key org-mode-map (kbd "C-j") nil)
 #+END_SRC
 * Add on packages
 ** UI Changes
