@@ -22,6 +22,7 @@
   (setq inhibit-startup-message t
         inhibit-startup-echo-area-message t)
   (menu-bar-mode -1)
+  (tool-bar-mode -1)
 #+END_SRC
 ** Enable which-key on pause
 #+BEGIN_SRC emacs-lisp
@@ -37,11 +38,24 @@
   (define-key hb-eval-map "x" '("Execute Command" . execute-extended-command))
   (setq help-char "")
 #+END_SRC
+*** File commands
+#+BEGIN_SRC emacs-lisp
+  (setq hb-file-map (make-sparse-keymap))
+  (define-key hb-file-map "f" '("Find file" . helm-find-file))
+  (define-key hb-file-map "d" '("Open dired in folder of this file" . dired))
+  (define-key hb-file-map "c" '("Open emacs config file" . (lambda () (interactive) (find-file (concat user-emacs-directory "settings.org")))))
+#+END_SRC
 *** Buffer commands
 #+BEGIN_SRC emacs-lisp
   (setq hb-buffer-map (make-sparse-keymap))
   (define-key hb-buffer-map "b" '("Switch to buffer" . switch-to-buffer))
   (define-key hb-buffer-map "l" '("List buffers" . list-buffers))
+#+END_SRC
+*** Org commands
+#+BEGIN_SRC emacs-lisp
+  (setq hb-org-map (make-sparse-keymap))
+  (define-key hb-org-map "p" '("Format paragraph" . org-fill-paragraph))
+  (define-key hb-org-map "a" '("Agenda" . org-agenda))
 #+END_SRC
 *** Custom Harpoon functionality
 #+BEGIN_SRC emacs-lisp
@@ -172,14 +186,23 @@
 #+BEGIN_SRC emacs-lisp
   (define-key org-mode-map (kbd "C-j") nil)
 #+END_SRC
+** Org mode settings
+#+BEGIN_SRC emacs-lisp
+  (setq org-cycle-emulate-tab 'white)
+  (setq org-agenda-files (list "~/org/" user-emacs-directory))
+#+END_SRC
+** TODO Custom compile command loader
+Create some functions to load in a commands file which then creates a
+auto-completable list that can be run.  This could be a very basic
+file format where each line is a pair of command name and the command
+to run
+#+BEGIN_SRC 
+run-tmpltst -> cargo run --bin tmpltst
+build-tmpltst -> cargo build --bin tmpltst
+watch-tmptst -> cargo watch -x "run --bin tmpltst"
+#+END_SRC
 * Add on packages
 ** UI Changes
-*** Enable kitty protocol (pass through super on terminal)
-#+BEGIN_SRC emacs-lisp
-(use-package kkp
-  :config
-  (global-kkp-mode 1))
-#+END_SRC
 *** Colour theme Doom (dark)
 #+BEGIN_SRC emacs-lisp
   (use-package doom-themes
@@ -208,8 +231,20 @@
     :ensure t
     :init (doom-modeline-mode 1))
 #+END_SRC
-
+*** Org mode look improvements
+#+BEGIN_SRC emacs-lisp
+    (use-package org-modern
+      :ensure t
+      :config
+      (add-hook 'org-mode-hook #'org-modern-mode))
+#+END_SRC
 ** Key binding changes
+*** Enable kitty protocol (pass through super on terminal)
+#+BEGIN_SRC emacs-lisp
+(use-package kkp
+  :config
+  (global-kkp-mode 1))
+#+END_SRC
 *** Evil package (VIM Emulation)
 #+BEGIN_SRC emacs-lisp
   (use-package evil
@@ -221,20 +256,23 @@
     (evil-define-key 'normal 'global (kbd "<leader>h") (cons "Help Commands" help-map))
     (evil-define-key 'normal 'global (kbd "<leader>p") '("Projectile commands" . projectile-command-map))
     (evil-define-key 'normal 'global (kbd "<leader>b") (cons "Buffer commands" hb-buffer-map))
+    (evil-define-key 'normal 'global (kbd "<leader>f") (cons "File commands" hb-file-map))
     (evil-define-key 'normal 'global (kbd "<leader>e") (cons "Evaluate commands" hb-eval-map))
     (evil-define-key 'normal 'global (kbd "<leader>m") (cons "Harpoon commands" hb-harpoon-map))
-    (evil-define-key 'normal 'global (kbd "<leader>ff") 'helm-find-files)
+    (evil-define-key 'normal 'global (kbd "<leader>o") (cons "Org commands" hb-org-map))
     (evil-define-key 'visual 'global (kbd "(") (lambda () (interactive) (insert-pair ?\( ?\)))
       (kbd "{") (lambda () (interactive) (insert-pair ?\{ ?\}))
       (kbd "[") (lambda () (interactive) (insert-pair ?\[ ?\]))
       (kbd "<") (lambda () (interactive) (insert-pair ?\< ?\>)))
+    (evil-define-key 'normal org-mode-map (kbd "TAB") #'org-cycle)
     (use-package evil-org
       :ensure t
+      :after org
+      :hook (org-mode . (lambda () evil-org-mode))
       :config
-      (evil-org-set-key-theme
-       '(textobjects insert navigation additional shift todo heading))
-      (add-hook 'org-mode-hook (lambda () (evil-org-mode))))
-    )
+      (require 'evil-org-agenda)
+      (evil-org-agenda-set-keys)
+    ))
 #+END_SRC
 ** Navigation
 *** Project navigation
@@ -351,6 +389,16 @@
   	      ("C-M-x" . #'my-flutter-run-or-hot-reload)))
   (use-package yaml-mode :ensure t)
 #+END_SRC
+*** Web dev (templating languages)
+#+BEGIN_SRC emacs-lisp
+  (use-package web-mode
+    :ensure t
+    :mode
+    (("\\.html" . web-mode))
+    :config
+    (setq web-mode-engines-alist '(("django" . "\\.html"))))
+#+END_SRC
+
 ** Auto completion and snippets (Company/Yasnippet)
 *** Extra functions to be linked source: [[https://robert.kra.hn/posts/2021-02-07_rust-with-emacs/#:~:text=%20Configuring%20Emacs%20for%20Rust%20development%20%201,order%20to%20setup%20debugging%20support%20for...%20More%20]]
 #+BEGIN_SRC emacs-lisp
