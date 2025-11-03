@@ -23,6 +23,7 @@
         inhibit-startup-echo-area-message t)
   (menu-bar-mode -1)
   (tool-bar-mode -1)
+  (scroll-bar-mode -1)
 #+END_SRC
 ** Enable which-key on pause
 #+BEGIN_SRC emacs-lisp
@@ -56,6 +57,7 @@
   (setq hb-org-map (make-sparse-keymap))
   (define-key hb-org-map "p" '("Format paragraph" . org-fill-paragraph))
   (define-key hb-org-map "a" '("Agenda" . org-agenda))
+  (define-key hb-org-map "t" '("Insert Timestamp" . org-timestamp))
 #+END_SRC
 *** Custom Harpoon functionality
 #+BEGIN_SRC emacs-lisp
@@ -233,10 +235,10 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
 #+END_SRC
 *** Org mode look improvements
 #+BEGIN_SRC emacs-lisp
-    (use-package org-modern
-      :ensure t
-      :config
-      (add-hook 'org-mode-hook #'org-modern-mode))
+  (use-package org-modern
+    :ensure t
+    :config
+    (add-hook 'org-mode-hook #'org-modern-mode))
 #+END_SRC
 ** Key binding changes
 *** Enable kitty protocol (pass through super on terminal)
@@ -251,15 +253,14 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
     :ensure t
     :config
     (evil-mode 1)
-    (evil-set-leader 'normal (kbd "SPC"))
-    (evil-set-leader 'visual (kbd "SPC"))
-    (evil-define-key 'normal 'global (kbd "<leader>h") (cons "Help Commands" help-map))
-    (evil-define-key 'normal 'global (kbd "<leader>p") '("Projectile commands" . projectile-command-map))
-    (evil-define-key 'normal 'global (kbd "<leader>b") (cons "Buffer commands" hb-buffer-map))
-    (evil-define-key 'normal 'global (kbd "<leader>f") (cons "File commands" hb-file-map))
-    (evil-define-key 'normal 'global (kbd "<leader>e") (cons "Evaluate commands" hb-eval-map))
-    (evil-define-key 'normal 'global (kbd "<leader>m") (cons "Harpoon commands" hb-harpoon-map))
-    (evil-define-key 'normal 'global (kbd "<leader>o") (cons "Org commands" hb-org-map))
+    (evil-set-leader '(normal visual motion) (kbd "SPC"))
+    (evil-define-key '(normal visual motion) 'global (kbd "<leader>h") (cons "Help Commands" help-map))
+    (evil-define-key '(normal visual motion) 'global (kbd "<leader>p") '("Projectile commands" . projectile-command-map))
+    (evil-define-key '(normal visual motion) 'global (kbd "<leader>b") (cons "Buffer commands" hb-buffer-map))
+    (evil-define-key '(normal visual motion) 'global (kbd "<leader>f") (cons "File commands" hb-file-map))
+    (evil-define-key '(normal visual motion) 'global (kbd "<leader>e") (cons "Evaluate commands" hb-eval-map))
+    (evil-define-key '(normal visual motion) 'global (kbd "<leader>m") (cons "Harpoon commands" hb-harpoon-map))
+    (evil-define-key '(normal visual motion) 'global (kbd "<leader>o") (cons "Org commands" hb-org-map))
     (evil-define-key 'visual 'global (kbd "(") (lambda () (interactive) (insert-pair ?\( ?\)))
       (kbd "{") (lambda () (interactive) (insert-pair ?\{ ?\}))
       (kbd "[") (lambda () (interactive) (insert-pair ?\[ ?\]))
