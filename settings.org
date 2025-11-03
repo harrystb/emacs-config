@@ -23,14 +23,21 @@
         inhibit-startup-echo-area-message t)
   (menu-bar-mode -1)
   (tool-bar-mode -1)
-  (scroll-bar-mode -1)
+  (when (display-graphic-p)
+    (scroll-bar-mode -1)
+    )
 #+END_SRC
 ** Enable which-key on pause
 #+BEGIN_SRC emacs-lisp
   (which-key-mode 1)
   (setq which-key-side-window-location '(right, bottom))
 #+END_SRC
-** Remap basic keys
+** Map/Remap keys
+*** Basic changes
+#+BEGIN_SRC emacs-lisp
+  ; Make escape cancel all menus
+  (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
+#+END_SRC
 *** Evaluate commands
 #+BEGIN_SRC emacs-lisp
   (setq hb-eval-map (make-sparse-keymap))
@@ -42,7 +49,7 @@
 *** File commands
 #+BEGIN_SRC emacs-lisp
   (setq hb-file-map (make-sparse-keymap))
-  (define-key hb-file-map "f" '("Find file" . helm-find-file))
+  (define-key hb-file-map "f" '("Find file" . helm-find-files))
   (define-key hb-file-map "d" '("Open dired in folder of this file" . dired))
   (define-key hb-file-map "c" '("Open emacs config file" . (lambda () (interactive) (find-file (concat user-emacs-directory "settings.org")))))
 #+END_SRC
