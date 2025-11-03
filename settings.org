@@ -17,7 +17,7 @@
 #+END_SRC
 
 * Default Settings, which-key and basic key remaps
-** Remove splash screen, menu bar  and echo area on startup
+** Remove splash screen, menu bar, scroll-bar, toolbar and echo area on startup
 #+BEGIN_SRC emacs-lisp
   (setq inhibit-startup-message t
         inhibit-startup-echo-area-message t)
@@ -26,6 +26,16 @@
   (when (display-graphic-p)
     (scroll-bar-mode -1)
     )
+#+END_SRC
+** Setup line numbers
+#+BEGIN_SRC emacs-lisp
+  (setq display-line-numbers-type 'relative)
+  (global-display-line-numbers-mode +1)
+#+END_SRC
+** Setup font
+#+BEGIN_SRC emacs-lisp
+  (when (and (window-system) (x-list-fonts "JetBrainsMono NF"))
+    (set-frame-font "JetBrainsMono NF"))
 #+END_SRC
 ** Enable which-key on pause
 #+BEGIN_SRC emacs-lisp
@@ -245,7 +255,11 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
   (use-package org-modern
     :ensure t
     :config
-    (add-hook 'org-mode-hook #'org-modern-mode))
+    (add-hook 'org-mode-hook #'org-modern-mode)
+    (setq org-modern-star 'replace)
+    (unless (display-graphic-p)
+      (setq org-modern-table nil)
+      ))
 #+END_SRC
 ** Key binding changes
 *** Enable kitty protocol (pass through super on terminal)
@@ -343,21 +357,31 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
 	("<leader><leader>l" . flycheck-list-errors)
 		  ))
 #+END_SRC
-*** Rust
+*** Rust (rustic-mode)
 #+BEGIN_SRC emacs-lisp
+  (use-package rustic
+    :ensure t
+    :config
+    (add-hook 'rustic-mode-hook (lambda () (setq indent-tabs-mode nil)))
+    (add-hook 'rustic-mode-hook 'electric-pair-mode)
+    (add-hook 'rustic-mode-hook 'flycheck-mode)
+    (setq rustic-format-on-save t)
+    :bind
+    (:map rust-mode-map
+  	("<leader> <leader> C-r" . rust-run)
+  	)
+    )
+#+END_SRC
+*** #DISABLED Rust (rust-mode)
+#+BEGIN_SRC emacs-lisp :tangle no
   (use-package rust-mode
-    :ensure
+    :ensure t
     :config
     (add-hook 'rust-mode-hook (lambda () (setq indent-tabs-mode nil)))
     (add-hook 'rust-mode-hook 'electric-pair-mode)
     (add-hook 'rust-mode-hook 'flycheck-mode)
     (add-hook 'rust-mode-hook 'eglot-ensure)
     (setq rust-format-on-save t)
-    (use-package flycheck
-      :ensure t
-      :config
-      (add-hook 'rust-mode-hook 'flycheck-mode)
-      (add-hook 'rust-mode-hook 'eglot-ensure))
     :bind
     (:map rust-mode-map
 	  ("<leader> <leader> C-r" . rust-run)
