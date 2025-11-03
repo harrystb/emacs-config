@@ -339,23 +339,35 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
 #+END_SRC
 
 ** Programming
-*** LSP (Built in eglot)
+*** LSP (lsp-mode)
 #+BEGIN_SRC emacs-lisp
+  (use-package lsp-mode
+    :ensure t
+    :hook
+    (dart-mode . eglot-ensure)
+    (rust-mode . eglot-ensure)
+    (rustic-mode . eglot-ensure)
+    :config
+    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.git$]")
+    )
+#+END_SRC
+*** #DISABLED LSP (Built in eglot)
+#+BEGIN_SRC emacs-lisp :tangle no
   (use-package eglot
+    :hook
+    (dart-mode . eglot-ensure)
+    (rust-mode . eglot-ensure)
+    (rustic-mode . eglot-ensure)
     :bind
     (:map global-map
-	("<leader><leader>a" . eglot-code-actions)
-	("<leader><leader>r" . eglot-rename)
-	))
+  	("<leader><leader>a" . eglot-code-actions)
+  	("<leader><leader>r" . eglot-rename)
+  	))
 #+END_SRC
 *** Annotations
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck
-    :ensure t
-    :bind
-    (:map global-map
-	("<leader><leader>l" . flycheck-list-errors)
-		  ))
+    :ensure t)
 #+END_SRC
 *** Rust (rustic-mode)
 #+BEGIN_SRC emacs-lisp
@@ -366,10 +378,6 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
     (add-hook 'rustic-mode-hook 'electric-pair-mode)
     (add-hook 'rustic-mode-hook 'flycheck-mode)
     (setq rustic-format-on-save t)
-    :bind
-    (:map rust-mode-map
-  	("<leader> <leader> C-r" . rust-run)
-  	)
     )
 #+END_SRC
 *** #DISABLED Rust (rust-mode)
@@ -382,10 +390,6 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
     (add-hook 'rust-mode-hook 'flycheck-mode)
     (add-hook 'rust-mode-hook 'eglot-ensure)
     (setq rust-format-on-save t)
-    :bind
-    (:map rust-mode-map
-	  ("<leader> <leader> C-r" . rust-run)
-	  )
     )
 
 #+END_SRC
@@ -395,7 +399,6 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
     :ensure t
     :hook
     (dart-mode . flutter-test-mode)
-    (dart-mode . eglot-ensure)
     (dart-mode . electric-pair-mode))
   (use-package flutter
     :ensure t
