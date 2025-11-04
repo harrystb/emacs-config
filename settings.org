@@ -503,7 +503,7 @@ or gcc) and c++ compiler (g++).
 		("<tab>". tab-indent-or-complete)
 		("TAB". tab-indent-or-complete))
     :config
-    (add-hook 'rust-mode-hook 'company-mode))
+    (add-hook 'rust-mode-hook 'company-mode)
     (add-hook 'rustic-mode-hook 'company-mode))
 #+END_SRC
 *** Yasnippet (Snippets)
