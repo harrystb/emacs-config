@@ -230,17 +230,12 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
     ;; Global settings (defaults)
     (doom-themes-enable-bold t)   ; if nil, bold is universally disabled
     (doom-themes-enable-italic t) ; if nil, italics is universally disabled
-    ;; for treemacs users
-    (doom-themes-treemacs-theme "doom-atom") ; use "doom-colors" for less minimal icon theme
     :config
-    (load-theme 'doom-one t)
-
+    (load-theme 'doom-challenger-deep t)
     ;; Enable flashing mode-line on errors
     (doom-themes-visual-bell-config)
     ;; Enable custom neotree theme (nerd-icons must be installed!)
     (doom-themes-neotree-config)
-    ;; or for treemacs users
-    (doom-themes-treemacs-config)
     ;; Corrects (and improves) org-mode's native fontification.
     (doom-themes-org-config))
 #+END_SRC
@@ -285,7 +280,8 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
     (evil-define-key 'visual 'global (kbd "(") (lambda () (interactive) (insert-pair ?\( ?\)))
       (kbd "{") (lambda () (interactive) (insert-pair ?\{ ?\}))
       (kbd "[") (lambda () (interactive) (insert-pair ?\[ ?\]))
-      (kbd "<") (lambda () (interactive) (insert-pair ?\< ?\>)))
+      (kbd "<") (lambda () (interactive) (insert-pair ?\< ?\>))
+      (kbd "\"") (lambda () (interactive) (insert-pair ?\" ?\")))
     (evil-define-key 'normal org-mode-map (kbd "TAB") #'org-cycle)
     (use-package evil-org
       :ensure t
@@ -294,7 +290,7 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
       :config
       (require 'evil-org-agenda)
       (evil-org-agenda-set-keys)
-    ))
+      ))
 #+END_SRC
 ** Navigation
 *** Project navigation
@@ -317,8 +313,9 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
     :bind
     (("<leader> p" . 'projectile-command-map)))
 #+END_SRC
-*** Treemacs package (folder display and navigation)
-#+BEGIN_SRC emacs-lisp
+*** #DISABLED Treemacs package (folder display and navigation)
+If re-enabling, check out an alternative is Neotree.
+#+BEGIN_SRC emacs-lisp :tangle no
   (use-package treemacs
     :ensure t
     :config
@@ -340,11 +337,21 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
 
 ** Programming
 *** Treesitter (precompiled)
+Pre-compiled tree-sitter languages can be downloaded using the
+"tree-sitter-langs-install-grammars" function. They get stored
+somewhere along the lines of
+"/.emacs.d/elpa/tree-sitter-langs-20251102.1741/bin/".
+
+The files that are wanted can be copied from that location and placed
+in the "/.emacs.d/tree-sitter" folder with the name prefixed with
+"libtree-sitter-"
 #+BEGIN_SRC emacs-lisp
   (use-package tree-sitter-langs :ensure t)
-  (setq treesit-extra-load-path (list (concat user-emacs-directory "elpa/tree-sitter-langs-20251102.1741/bin/"))) 
   #+END_SRC
 *** #DISABLED Treesitter (manual install)
+Allows the function "treesit-install-language-grammar" to be used to
+install and compile one of these languages. Requires a c compiler (cc
+or gcc) and c++ compiler (g++).
 #+BEGIN_SRC emacs-lisp :tangle no
   (setq treesit-language-source-alist '(
   (rust . ("https://github.com/tree-sitter/tree-sitter-rust" "v0.23.2")) ;v0.23.2 until emacs treesitter support ABI version (https://github.com/rust-lang/rust-mode/issues/568) 
@@ -365,10 +372,8 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
       (rust-mode . lsp-mode)
       (rustic-mode . lsp-mode)
       :config
-      (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.git$]")
-      (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]target$")
-      (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]ios(\/|\\\\)(build|Pods|Runner|Share Extension)")
-      (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]ios(\/|\\\\)build")
+      (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]ios(\/|\\\\)(build|Pods|Runner|Share Extension)\\")
+      (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]ios(\/|\\\\)build\\")
       )
 #+END_SRC
 *** #DISABLED LSP (Built in eglot)
@@ -499,6 +504,7 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
 		("TAB". tab-indent-or-complete))
     :config
     (add-hook 'rust-mode-hook 'company-mode))
+    (add-hook 'rustic-mode-hook 'company-mode))
 #+END_SRC
 *** Yasnippet (Snippets)
 #+BEGIN_SRC emacs-lisp
