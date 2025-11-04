@@ -183,7 +183,7 @@
   (keymap-set hb-harpoon-list-map "<remap> <evil-ret>" 'hb-harpoon-list-switch)
   (define-minor-mode hb-harpoon-list-mode
     "Toggles the harpoon list mode."
-    nil
+    :init-value nil
     :global nil
     :lighter " harpoon"
     :keymap hb-harpoon-list-map
@@ -339,17 +339,29 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
 #+END_SRC
 
 ** Programming
+*** Treesitter
+#+BEGIN_SRC emacs-lisp
+  (use-package treesit-auto
+    :custom
+    (treesit-auto-install 'prompt)
+    :config
+    (treesit-auto-add-to-auto-mode-alist 'all)
+    (global-treesit-auto-mode))
+#+END_SRC
 *** LSP (lsp-mode)
 #+BEGIN_SRC emacs-lisp
-  (use-package lsp-mode
-    :ensure t
-    :hook
-    (dart-mode . eglot-ensure)
-    (rust-mode . eglot-ensure)
-    (rustic-mode . eglot-ensure)
-    :config
-    (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.git$]")
-    )
+    (use-package lsp-mode
+      :ensure t
+      :hook
+      (dart-mode . lsp-mode)
+      (rust-mode . lsp-mode)
+      (rustic-mode . lsp-mode)
+      :config
+      (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]\\.git$]")
+      (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]target$")
+      (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]ios(\/|\\\\)(build|Pods|Runner|Share Extension)")
+      (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]ios(\/|\\\\)build")
+      )
 #+END_SRC
 *** #DISABLED LSP (Built in eglot)
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -373,25 +385,22 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
 #+BEGIN_SRC emacs-lisp
   (use-package rustic
     :ensure t
+    :after rust-mode
     :config
-    (add-hook 'rustic-mode-hook (lambda () (setq indent-tabs-mode nil)))
-    (add-hook 'rustic-mode-hook 'electric-pair-mode)
-    (add-hook 'rustic-mode-hook 'flycheck-mode)
     (setq rustic-format-on-save t)
     )
 #+END_SRC
-*** #DISABLED Rust (rust-mode)
-#+BEGIN_SRC emacs-lisp :tangle no
+*** Rust (rust-mode)
+#+BEGIN_SRC emacs-lisp
   (use-package rust-mode
     :ensure t
+    :init
+    (setq rust-mode-treesitter-derive t)
     :config
     (add-hook 'rust-mode-hook (lambda () (setq indent-tabs-mode nil)))
     (add-hook 'rust-mode-hook 'electric-pair-mode)
     (add-hook 'rust-mode-hook 'flycheck-mode)
-    (add-hook 'rust-mode-hook 'eglot-ensure)
-    (setq rust-format-on-save t)
     )
-
 #+END_SRC
 *** Flutter/Dart Packages
 #+BEGIN_SRC emacs-lisp
