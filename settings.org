@@ -222,6 +222,11 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
 #+END_SRC
 * Add on packages
 ** UI Changes
+*** Utility for installing system fonts
+Run the command "all-the-icons-install-fonts" to install the fonts to the system
+#+BEGIN_SRC emacs-lisp
+  (use-package all-the-icons :if (display-graphic-p))
+#+END_SRC
 *** Colour theme Doom (dark)
 #+BEGIN_SRC emacs-lisp
   (use-package doom-themes
@@ -231,7 +236,7 @@ watch-tmptst -> cargo watch -x "run --bin tmpltst"
     (doom-themes-enable-bold t)   ; if nil, bold is universally disabled
     (doom-themes-enable-italic t) ; if nil, italics is universally disabled
     :config
-    (load-theme 'doom-challenger-deep t)
+    (load-theme 'doom-dracula t)
     ;; Enable flashing mode-line on errors
     (doom-themes-visual-bell-config)
     ;; Enable custom neotree theme (nerd-icons must be installed!)
@@ -531,7 +536,6 @@ or gcc) and c++ compiler (g++).
   :config
   (setq templates-private-directory "~/.emacs.d/templates"))
 #+END_SRC
-
 
 ** Extra functionality
 *** ISpell package (spell checking)
