@@ -4,16 +4,30 @@
 * Package repo configuration
   Add the melpa repository and make sure use-package is installed
 #+BEGIN_SRC emacs-lisp
-(require 'package)
-(add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/") t)
-(package-initialize)
+  (require 'package)
+  (setq package-archives '(("melpa" . "https://melpa.org/packages/")
+  			    ("org" . "https://orgmode.org/elpa/")
+  			    ("elpa" . "https://elpa.gnu.org/packages/")))
+  (package-initialize)
+  (unless package-archive-contents (package-refresh-contents))
 
-(unless (package-installed-p 'use-package)
-  (package-refresh-contents)
-  (package-install 'use-package))
+  (unless (package-installed-p 'use-package)
+    (package-install 'use-package))
 
-(eval-when-compile
-  (require 'use-package))
+  (require 'use-package)
+  (setq use-package-always-ensure t)
+#+END_SRC
+
+* Automatic Package updates
+#+BEGIN_SRC emacs-lisp
+  (use-package auto-package-update
+    :custom
+    (auto-package-update-interval 7)
+    (auto-package-update-prompt-before-update t)
+    (auto-package-update-hide-results t)
+    :config
+    (auto-package-update-maybe)
+    (auto-package-update-at-time "09:00"))
 #+END_SRC
 
 * Default Settings, which-key and basic key remaps
@@ -23,14 +37,14 @@
         inhibit-startup-echo-area-message t)
   (menu-bar-mode -1)
   (tool-bar-mode -1)
+  (tooltip-mode -1)
   (when (display-graphic-p)
-    (scroll-bar-mode -1)
-    )
+    (scroll-bar-mode -1))
 #+END_SRC
 ** Setup line numbers
 #+BEGIN_SRC emacs-lisp
   (setq display-line-numbers-type 'relative)
-  (global-display-line-numbers-mode +1)
+  (global-display-line-numbers-mode t)
 #+END_SRC
 ** Setup font
 #+BEGIN_SRC emacs-lisp
@@ -42,13 +56,83 @@
   (which-key-mode 1)
   (setq which-key-side-window-location '(right, bottom))
 #+END_SRC
-** Map/Remap keys
-*** Basic changes
+** TODO Custom compile command loader
+Create some functions to load in a commands file which then creates a
+auto-completable list that can be run.  This could be a very basic
+file format where each line is a pair of command name and the command
+to run
+#+BEGIN_SRC 
+run-tmpltst -> cargo run --bin tmpltst
+build-tmpltst -> cargo build --bin tmpltst
+watch-tmptst -> cargo watch -x "run --bin tmpltst"
+#+END_SRC
+* UI Changes
+** Utility for installing system fonts
+Run the command "all-the-icons-install-fonts" to install the fonts to the system
 #+BEGIN_SRC emacs-lisp
-  ; Make escape cancel all menus
+  (use-package all-the-icons :if (display-graphic-p))
+#+END_SRC
+** Colour theme Doom (dark)
+#+BEGIN_SRC emacs-lisp
+  (use-package doom-themes
+    :ensure t
+    :custom
+    ;; Global settings (defaults)
+    (doom-themes-enable-bold t)   ; if nil, bold is universally disabled
+    (doom-themes-enable-italic t) ; if nil, italics is universally disabled
+    :config
+    (load-theme 'doom-dracula t)
+    ;; Enable flashing mode-line on errors
+    (doom-themes-visual-bell-config)
+    ;; Enable custom neotree theme (nerd-icons must be installed!)
+    (doom-themes-neotree-config)
+    ;; Corrects (and improves) org-mode's native fontification.
+    (doom-themes-org-config))
+#+END_SRC
+** Mode line
+#+BEGIN_SRC emacs-lisp
+  (use-package doom-modeline
+    :ensure t
+    :init (doom-modeline-mode 1))
+#+END_SRC
+* Org mode customisations
+#+BEGIN_SRC emacs-lisp
+  (defun hb-org-mode-setup ()
+    (org-indent-mode)
+    (visual-line-mode 1))
+  (use-package org
+    :pin org
+    :commands (org-capture org-agenda)
+    :hook (org-mode . hb-org-mode-setup)
+    :config
+    (setq org-ellipsis " ▾")
+    (setq org-agenda-start-with-log-mode t)
+    (setq org-log-done 'time)
+    (setq org-log-into-drawer t)
+    (setq org-cycle-emulate-tab 'white)
+    (setq org-agenda-files (list "~/org/" user-emacs-directory "~/dev/blink/")))
+  (use-package evil-org
+    :after org
+    :hook (org-mode . (lambda () evil-org-mode))
+    :config
+    (require 'evil-org-agenda)
+    (evil-org-agenda-set-keys))
+  (use-package org-bullets
+    :hook (org-mode . org-bullets-mode))
+#+END_SRC
+* Key bindings
+** Enable kitty protocol (pass through super on terminal)
+#+BEGIN_SRC emacs-lisp
+(unless (display-graphic-p) (use-package kkp
+  :config
+  (global-kkp-mode 1)))
+#+END_SRC
+** Basic changes
+Setup escape to exit all popups and panels
+#+BEGIN_SRC emacs-lisp
   (global-set-key (kbd "<escape>") 'keyboard-escape-quit)
 #+END_SRC
-*** Evaluate commands
+** Evaluate commands
 #+BEGIN_SRC emacs-lisp
   (setq hb-eval-map (make-sparse-keymap))
   (define-key hb-eval-map "r" '("Evaluate region" . eval-region))
@@ -56,27 +140,27 @@
   (define-key hb-eval-map "x" '("Execute Command" . execute-extended-command))
   (setq help-char "")
 #+END_SRC
-*** File commands
+** File commands
 #+BEGIN_SRC emacs-lisp
   (setq hb-file-map (make-sparse-keymap))
   (define-key hb-file-map "f" '("Find file" . helm-find-files))
   (define-key hb-file-map "d" '("Open dired in folder of this file" . dired))
   (define-key hb-file-map "c" '("Open emacs config file" . (lambda () (interactive) (find-file (concat user-emacs-directory "settings.org")))))
 #+END_SRC
-*** Buffer commands
+** Buffer commands
 #+BEGIN_SRC emacs-lisp
   (setq hb-buffer-map (make-sparse-keymap))
   (define-key hb-buffer-map "b" '("Switch to buffer" . switch-to-buffer))
   (define-key hb-buffer-map "l" '("List buffers" . list-buffers))
 #+END_SRC
-*** Org commands
+** Org commands
 #+BEGIN_SRC emacs-lisp
   (setq hb-org-map (make-sparse-keymap))
   (define-key hb-org-map "p" '("Format paragraph" . org-fill-paragraph))
   (define-key hb-org-map "a" '("Agenda" . org-agenda))
   (define-key hb-org-map "t" '("Insert Timestamp" . org-timestamp))
 #+END_SRC
-*** Custom Harpoon functionality
+** Custom Harpoon functionality
 #+BEGIN_SRC emacs-lisp
   (defvar hb-harpoon-list () "The list of buffers in the harpoon quick list")
   (defun hb-harpoon-add ()
@@ -201,74 +285,11 @@
   (define-key global-map (kbd "C-k") '("Quickswitch to buffer 3" . (lambda () (interactive) (hb-harpoon-switch 2))))
   (define-key global-map (kbd "C-l") '("Quickswitch to buffer 4" . (lambda () (interactive) (hb-harpoon-switch 3))))
 #+END_SRC
-**** Unbind competing keybinds from other modes
+*** Unbind competing keybinds from other modes
 #+BEGIN_SRC emacs-lisp
   (define-key org-mode-map (kbd "C-j") nil)
 #+END_SRC
-** Org mode settings
-#+BEGIN_SRC emacs-lisp
-  (setq org-cycle-emulate-tab 'white)
-  (setq org-agenda-files (list "~/org/" user-emacs-directory))
-#+END_SRC
-** TODO Custom compile command loader
-Create some functions to load in a commands file which then creates a
-auto-completable list that can be run.  This could be a very basic
-file format where each line is a pair of command name and the command
-to run
-#+BEGIN_SRC 
-run-tmpltst -> cargo run --bin tmpltst
-build-tmpltst -> cargo build --bin tmpltst
-watch-tmptst -> cargo watch -x "run --bin tmpltst"
-#+END_SRC
-* Add on packages
-** UI Changes
-*** Utility for installing system fonts
-Run the command "all-the-icons-install-fonts" to install the fonts to the system
-#+BEGIN_SRC emacs-lisp
-  (use-package all-the-icons :if (display-graphic-p))
-#+END_SRC
-*** Colour theme Doom (dark)
-#+BEGIN_SRC emacs-lisp
-  (use-package doom-themes
-    :ensure t
-    :custom
-    ;; Global settings (defaults)
-    (doom-themes-enable-bold t)   ; if nil, bold is universally disabled
-    (doom-themes-enable-italic t) ; if nil, italics is universally disabled
-    :config
-    (load-theme 'doom-dracula t)
-    ;; Enable flashing mode-line on errors
-    (doom-themes-visual-bell-config)
-    ;; Enable custom neotree theme (nerd-icons must be installed!)
-    (doom-themes-neotree-config)
-    ;; Corrects (and improves) org-mode's native fontification.
-    (doom-themes-org-config))
-#+END_SRC
-*** Mode line
-#+BEGIN_SRC emacs-lisp
-  (use-package doom-modeline
-    :ensure t
-    :init (doom-modeline-mode 1))
-#+END_SRC
-*** Org mode look improvements
-#+BEGIN_SRC emacs-lisp
-  (use-package org-modern
-    :ensure t
-    :config
-    (add-hook 'org-mode-hook #'org-modern-mode)
-    (setq org-modern-star 'replace)
-    (unless (display-graphic-p)
-      (setq org-modern-table nil)
-      ))
-#+END_SRC
-** Key binding changes
-*** Enable kitty protocol (pass through super on terminal)
-#+BEGIN_SRC emacs-lisp
-(use-package kkp
-  :config
-  (global-kkp-mode 1))
-#+END_SRC
-*** Evil package (VIM Emulation)
+** Evil package (VIM Emulation)
 #+BEGIN_SRC emacs-lisp
   (use-package evil
     :ensure t
@@ -297,8 +318,8 @@ Run the command "all-the-icons-install-fonts" to install the fonts to the system
       (evil-org-agenda-set-keys)
       ))
 #+END_SRC
-** Navigation
-*** Project navigation
+* Navigation
+** Project navigation
 #+BEGIN_SRC emacs-lisp
   (use-package helm
     :ensure t
@@ -318,7 +339,7 @@ Run the command "all-the-icons-install-fonts" to install the fonts to the system
     :bind
     (("<leader> p" . 'projectile-command-map)))
 #+END_SRC
-*** #DISABLED Treemacs package (folder display and navigation)
+** #DISABLED Treemacs package (folder display and navigation)
 If re-enabling, check out an alternative is Neotree.
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package treemacs
@@ -340,8 +361,8 @@ If re-enabling, check out an alternative is Neotree.
 	  ("C-x t M-t" . treemacs-find-tag)))
 #+END_SRC
 
-** Programming
-*** Treesitter (precompiled)
+* Programming
+** Treesitter (precompiled)
 Pre-compiled tree-sitter languages can be downloaded using the
 "tree-sitter-langs-install-grammars" function. They get stored
 somewhere along the lines of
@@ -353,7 +374,7 @@ in the "/.emacs.d/tree-sitter" folder with the name prefixed with
 #+BEGIN_SRC emacs-lisp
   (use-package tree-sitter-langs :ensure t)
   #+END_SRC
-*** #DISABLED Treesitter (manual install)
+** #DISABLED Treesitter (manual install)
 Allows the function "treesit-install-language-grammar" to be used to
 install and compile one of these languages. Requires a c compiler (cc
 or gcc) and c++ compiler (g++).
@@ -368,7 +389,7 @@ or gcc) and c++ compiler (g++).
   (html . ("https://github.com/tree-sitter/tree-sitter-html"))
   (css . ("https://github.com/tree-sitter/tree-sitter-css"))))
   #+END_SRC
-*** LSP (lsp-mode)
+** LSP (lsp-mode)
 #+BEGIN_SRC emacs-lisp
     (use-package lsp-mode
       :ensure t
@@ -381,7 +402,7 @@ or gcc) and c++ compiler (g++).
       (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]ios(\/|\\\\)build\\")
       )
 #+END_SRC
-*** #DISABLED LSP (Built in eglot)
+** #DISABLED LSP (Built in eglot)
 #+BEGIN_SRC emacs-lisp :tangle no
   (use-package eglot
     :hook
@@ -394,12 +415,12 @@ or gcc) and c++ compiler (g++).
   	("<leader><leader>r" . eglot-rename)
   	))
 #+END_SRC
-*** Annotations
+** Annotations
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck
     :ensure t)
 #+END_SRC
-*** Rust (rustic-mode)
+** Rust (rustic-mode)
 #+BEGIN_SRC emacs-lisp
   (use-package rustic
     :ensure t
@@ -408,7 +429,7 @@ or gcc) and c++ compiler (g++).
     (setq rustic-format-on-save t)
     )
 #+END_SRC
-*** Rust (rust-mode)
+** Rust (rust-mode)
 #+BEGIN_SRC emacs-lisp
   (use-package rust-mode
     :ensure t
@@ -420,7 +441,7 @@ or gcc) and c++ compiler (g++).
     (add-hook 'rust-mode-hook 'flycheck-mode)
     )
 #+END_SRC
-*** Flutter/Dart Packages
+** Flutter/Dart Packages
 #+BEGIN_SRC emacs-lisp
   (use-package dart-mode
     :ensure t
@@ -451,7 +472,7 @@ or gcc) and c++ compiler (g++).
   	      ("C-M-x" . #'my-flutter-run-or-hot-reload)))
   (use-package yaml-mode :ensure t)
 #+END_SRC
-*** Web dev (templating languages)
+** Web dev (templating languages)
 #+BEGIN_SRC emacs-lisp
   (use-package web-mode
     :ensure t
@@ -461,8 +482,9 @@ or gcc) and c++ compiler (g++).
     (setq web-mode-engines-alist '(("django" . "\\.html"))))
 #+END_SRC
 
-** Auto completion and snippets (Company/Yasnippet)
-*** Extra functions to be linked source: [[https://robert.kra.hn/posts/2021-02-07_rust-with-emacs/#:~:text=%20Configuring%20Emacs%20for%20Rust%20development%20%201,order%20to%20setup%20debugging%20support%20for...%20More%20]]
+* Auto completion and snippets (Company/Yasnippet)
+** Smarter completion functions
+[[https://robert.kra.hn/posts/2021-02-07_rust-with-emacs/#:~:text=%20Configuring%20Emacs%20for%20Rust%20development%20%201,order%20to%20setup%20debugging%20support%20for...%20More%20][Source of these functions]]
 #+BEGIN_SRC emacs-lisp
 (defun company-yasnippet-or-completion ()
   (interactive)
@@ -491,7 +513,7 @@ or gcc) and c++ compiler (g++).
             (company-complete-common)
           (indent-for-tab-command)))))
 #+END_SRC
-*** Company (Completions)
+** Company (Completions)
 #+BEGIN_SRC emacs-lisp
 (use-package company
     :ensure
@@ -511,7 +533,7 @@ or gcc) and c++ compiler (g++).
     (add-hook 'rust-mode-hook 'company-mode)
     (add-hook 'rustic-mode-hook 'company-mode))
 #+END_SRC
-*** Yasnippet (Snippets)
+** Yasnippet (Snippets)
 #+BEGIN_SRC emacs-lisp
 (use-package yasnippet
   :ensure t
