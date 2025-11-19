@@ -4,17 +4,11 @@
 * Package repo configuration
   Add the melpa repository and make sure use-package is installed
 #+BEGIN_SRC emacs-lisp
-  (require 'package)
   (setq package-archives '(("melpa" . "https://melpa.org/packages/")
   			    ("org" . "https://orgmode.org/elpa/")
   			    ("elpa" . "https://elpa.gnu.org/packages/")))
-  (package-initialize)
   (unless package-archive-contents (package-refresh-contents))
 
-  (unless (package-installed-p 'use-package)
-    (package-install 'use-package))
-
-  (require 'use-package)
   (setq use-package-always-ensure t)
 #+END_SRC
 
@@ -31,6 +25,11 @@
 #+END_SRC
 
 * Default Settings, which-key and basic key remaps
+** Set custom variable location
+#+BEGIN_SRC emacs-lisp
+  (setq custom-file (concat user-emacs-directory "custom.el"))
+  (load custom-file t)
+#+END_SRC
 ** Remove splash screen, menu bar, scroll-bar, toolbar and echo area on startup
 #+BEGIN_SRC emacs-lisp
   (setq inhibit-startup-message t
@@ -154,7 +153,7 @@ Setup escape to exit all popups and panels
   (define-key hb-other-buffer-map "f" '("Switch Buffer Other Frame" . consult-buffer-other-frame))
   (define-key hb-other-buffer-map "t" '("Switch Buffer Other Tab" . consult-buffer-other-tab))
   (setq hb-buffer-map (make-sparse-keymap))
-  (define-key hb-buffer-map "b" '("Switch to buffer" . consult-switch-to-buffer))
+  (define-key hb-buffer-map "b" '("Switch to buffer" . consult-buffer))
   (define-key hb-buffer-map "p" '("Switch to project buffer" . consult-project-buffer))
   (define-key hb-buffer-map "o" (cons "Switch to buffer in other..." hb-other-buffer-map))
   (define-key hb-buffer-map "l" '("List buffers" . list-buffers))
@@ -312,6 +311,7 @@ Setup escape to exit all popups and panels
     :ensure t
     :config
     (evil-mode 1)
+    (evil-set-undo-system 'undo-redo)
     (evil-set-leader '(normal visual motion) (kbd "SPC"))
     (evil-define-key '(normal visual motion) 'global (kbd "<leader>h") (cons "Help Commands" help-map))
     (evil-define-key '(normal visual motion) 'global (kbd "<leader>p") '("Projectile commands" . projectile-command-map))
@@ -565,8 +565,8 @@ or gcc) and c++ compiler (g++).
   (html . ("https://github.com/tree-sitter/tree-sitter-html"))
   (css . ("https://github.com/tree-sitter/tree-sitter-css"))))
   #+END_SRC
-** LSP (lsp-mode)
-#+BEGIN_SRC emacs-lisp
+** #DISABLED LSP (lsp-mode)
+#+BEGIN_SRC emacs-lisp :tangle no
     (use-package lsp-mode
       :ensure t
       :hook
@@ -578,26 +578,30 @@ or gcc) and c++ compiler (g++).
       (add-to-list 'lsp-file-watch-ignored-directories "[/\\\\]ios(\/|\\\\)build\\")
       )
 #+END_SRC
-** #DISABLED LSP (Built in eglot)
-#+BEGIN_SRC emacs-lisp :tangle no
-  (use-package eglot
-    :hook
-    (dart-mode . eglot-ensure)
-    (rust-mode . eglot-ensure)
-    (rustic-mode . eglot-ensure)
-    :bind
-    (:map global-map
-  	("<leader><leader>a" . eglot-code-actions)
-  	("<leader><leader>r" . eglot-rename)
-  	))
+** LSP (Built in eglot)
+#+BEGIN_SRC emacs-lisp
+      (use-package eglot
+        :demand t
+        :hook
+        (dart-mode . eglot-ensure)
+        (rust-mode . eglot-ensure)
+        (rust-ts-mode . eglot-ensure)
+        (rustic-mode . eglot-ensure)
+        :bind
+        (:map eglot-mode-map
+    	  ("C-c a" . eglot-code-actions)
+    	  ("C-c r" . eglot-rename)
+    	  ("C-c d" . eldoc)
+  	  )
+        )
 #+END_SRC
 ** Annotations
 #+BEGIN_SRC emacs-lisp
   (use-package flycheck
     :ensure t)
 #+END_SRC
-** Rust (rustic-mode)
-#+BEGIN_SRC emacs-lisp
+** #DISABLED Rust (rustic-mode)
+#+BEGIN_SRC emacs-lisp :tangle no
   (use-package rustic
     :ensure t
     :after rust-mode
@@ -605,7 +609,7 @@ or gcc) and c++ compiler (g++).
     (setq rustic-format-on-save t)
     )
 #+END_SRC
-** Rust (rust-mode)
+** Rust (rust-mode/rust-ts-mode)
 #+BEGIN_SRC emacs-lisp
   (use-package rust-mode
     :ensure t
@@ -692,7 +696,6 @@ or gcc) and c++ compiler (g++).
 ** Company (Completions)
 #+BEGIN_SRC emacs-lisp
 (use-package company
-    :ensure
     :custom
 	(company-idle-delay 0.5) ;; how long to wait until popup
 	;; (company-begin-commands nil) ;; uncomment to disable popup
