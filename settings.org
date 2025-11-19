@@ -149,8 +149,14 @@ Setup escape to exit all popups and panels
 #+END_SRC
 ** Buffer commands
 #+BEGIN_SRC emacs-lisp
+  (setq hb-other-buffer-map (make-sparse-keymap))
+  (define-key hb-other-buffer-map "w" '("Switch Buffer Other Window" . consult-buffer-other-window))
+  (define-key hb-other-buffer-map "f" '("Switch Buffer Other Frame" . consult-buffer-other-frame))
+  (define-key hb-other-buffer-map "t" '("Switch Buffer Other Tab" . consult-buffer-other-tab))
   (setq hb-buffer-map (make-sparse-keymap))
-  (define-key hb-buffer-map "b" '("Switch to buffer" . switch-to-buffer))
+  (define-key hb-buffer-map "b" '("Switch to buffer" . consult-switch-to-buffer))
+  (define-key hb-buffer-map "p" '("Switch to project buffer" . consult-project-buffer))
+  (define-key hb-buffer-map "o" (cons "Switch to buffer in other..." hb-other-buffer-map))
   (define-key hb-buffer-map "l" '("List buffers" . list-buffers))
 #+END_SRC
 ** Org commands
