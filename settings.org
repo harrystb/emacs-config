@@ -298,11 +298,11 @@ Setup escape to exit all popups and panels
 *** Rust compile commands
 #+BEGIN_SRC emacs-lisp
   (setq hb-blink-watch-map (make-sparse-keymap))
-  (define-key hb-blink-watch-map "c" '("Watch custom" . (lambda (&optional cmd) (interactive "sBin Name:") (compile (format "cargo watch -x \"run --bin %s\"" cmd)))))
-  (define-key hb-blink-watch-map "t" '("Watch tmpltst" . (lambda () (interactive) (compile "cargo watch -x \"run --bin tmpltst\""))))
+  (define-key hb-blink-watch-map "c" '("Watch custom" . (lambda (&optional cmd) (interactive "sBin Name:") (compile (format "cd %s && cargo watch -x \"run --bin %s\"" (projectile-project-root) cmd)))))
+  (define-key hb-blink-watch-map "t" '("Watch tmpltst" . (lambda () (interactive) (compile (format "cd %s && cargo watch -x \"run --bin tmpltst\"" (projectile-project-root))))))
   (setq hb-blink-map (make-sparse-keymap))
-  (define-key hb-blink-map "c" '("Run custom" . (lambda (&optional cmd) (interactive "sBin name:") (compile (format "cargo run --bin %s" cmd)))))
-  (define-key hb-blink-map "t" '("Run tmpltst" . (lambda () (interactive) (compile "cargo run --bin tmpltst"))))
+  (define-key hb-blink-map "c" '("Run custom" . (lambda (&optional cmd) (interactive "sBin name:") (compile (format "cd %s && cargo run --bin %s" (projectile-project-root) cmd)))))
+  (define-key hb-blink-map "t" '("Run tmpltst" . (lambda () (interactive) (compile (format "cd %s && cargo run --bin tmpltst" (projectile-project-root))))))
   (define-key hb-blink-map "w" (cons "Watch commands" hb-blink-watch-map))
 #+END_SRC
 ** Evil package (VIM Emulation)
