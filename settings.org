@@ -616,7 +616,7 @@ or gcc) and c++ compiler (g++).
     (setq rust-mode-treesitter-derive t)
     :config
     (add-hook 'rust-mode-hook (lambda () (setq indent-tabs-mode nil)))
-    (add-hook 'rust-mode-hook 'electric-pair-mode)
+    (add-hook 'rust-mode-hook 'electric-pair-local-mode)
     (add-hook 'rust-mode-hook 'flycheck-mode)
     (add-hook 'rust-mode-hook 'company-mode)
     )
@@ -627,7 +627,7 @@ or gcc) and c++ compiler (g++).
     :ensure t
     :hook
     (dart-mode . flutter-test-mode)
-    (dart-mode . electric-pair-mode))
+    (dart-mode . electric-pair-local-mode))
   (use-package flutter
     :ensure t
     :after dart-mode
