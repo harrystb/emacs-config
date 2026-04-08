@@ -578,21 +578,22 @@ or gcc) and c++ compiler (g++).
 #+END_SRC
 ** LSP (Built in eglot)
 #+BEGIN_SRC emacs-lisp
-      (use-package eglot
-        :demand t
-        :hook
-        (dart-mode . eglot-ensure)
-        (rust-mode . eglot-ensure)
-        (rust-ts-mode . eglot-ensure)
-        (rustic-mode . eglot-ensure)
-        :bind
-        (:map eglot-mode-map
-    	  ("C-c a" . eglot-code-actions)
-    	  ("C-c r" . eglot-rename)
-    	  ("C-c d" . eldoc)
-    	  ("C-c f" . eglot-format-buffer)
+  (use-package eglot
+    :demand t
+    :hook
+    (dart-mode . eglot-ensure)
+    (rust-mode . eglot-ensure)
+    (rust-ts-mode . eglot-ensure)
+    (rustic-mode . eglot-ensure)
+    :bind
+    (:map eglot-mode-map
+  	  ("C-c a" . eglot-code-actions)
+  	  ("C-c r" . eglot-rename)
+  	  ("C-c d" . eldoc)
+  	  ("C-c f" . eglot-format-buffer)
+            ("C-c e" . consult-flymake)
   	  )
-        )
+    )
 #+END_SRC
 ** Annotations
 #+BEGIN_SRC emacs-lisp
@@ -637,7 +638,7 @@ or gcc) and c++ compiler (g++).
       (interactive)
       (if (flutter--running-p)
   	(flutter-hot-reload)
-        (flutter-run "-d windows")))
+        (flutter-run)))
     (defun my-flutter-before-save ()
       (lsp-format-buffer))
     (defun my-flutter-on-save-hot-reload ()
@@ -648,6 +649,8 @@ or gcc) and c++ compiler (g++).
         nil))
     (add-hook 'flutter-test-mode-hook (lambda () (add-hook 'after-save-hook 'my-flutter-on-save-hot-reload nil 'make-it-local)))
     (add-hook 'flutter-test-mode-hook (lambda () (add-hook 'before-save-hook 'my-flutter-before-save nil 'make-it-local)))
+    :hook
+    (flutter-test-mode . company-mode)
     :bind (:map hb-blink-map
   	      ("f" . #'my-flutter-run-or-hot-reload)))
   (use-package yaml-mode :ensure t)
@@ -781,8 +784,7 @@ or gcc) and c++ compiler (g++).
 (defun my-decrement-number-decimal (&optional arg)
   (interactive "p*")
   (my-increment-number-decimal (if arg (- arg) -1)))
-(global-set-key (kbd "C-<kp-add>") 'my-increment-number-decimal)
-(global-set-key (kbd "C-<kp-subtract>") 'my-decrement-number-decimal)
-(define-key function-key-map (kbd "<f13>") 'event-apply-super-modifier)
+(global-set-key (kbd "M-k") 'my-increment-number-decimal)
+(global-set-key (kbd "M-j") 'my-decrement-number-decimal)
 #+END_SRC
 
