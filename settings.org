@@ -155,6 +155,16 @@ Setup escape to exit all popups and panels
   (define-key hb-org-map "a" '("Agenda" . org-agenda))
   (define-key hb-org-map "t" '("Insert Timestamp" . org-timestamp))
 #+END_SRC
+** Manual session saving/loading
+#+BEGIN_SRC emacs-lisp
+  (setq hb-desktop-map (make-sparse-keymap))
+  (define-key hb-desktop-map "s" '("Save session to desktop file" . desktop-save))
+  (define-key hb-desktop-map "d" '("Load session from desktop file" . desktop-read))
+  (use-package desktop
+    :config
+    (push "." desktop-path)
+    )
+#+END_SRC
 ** Custom Harpoon functionality
 #+BEGIN_SRC emacs-lisp
   (defvar hb-harpoon-list () "The list of buffers in the harpoon quick list")
@@ -317,6 +327,7 @@ Setup escape to exit all popups and panels
     (evil-define-key '(normal visual motion) 'global (kbd "<leader>e") (cons "Evaluate commands" hb-eval-map))
     (evil-define-key '(normal visual motion) 'global (kbd "<leader>m") (cons "Harpoon commands" hb-harpoon-map))
     (evil-define-key '(normal visual motion) 'global (kbd "<leader>o") (cons "Org commands" hb-org-map))
+    (evil-define-key '(normal visual motion) 'global (kbd "<leader>d") (cons "Session Management" hb-desktop-map))
     (evil-define-key '(normal visual motion) 'global (kbd "<leader>c") (cons "Blink commands" hb-blink-map))
     (evil-define-key 'visual 'global (kbd "(") (lambda () (interactive) (insert-pair ?\( ?\)))
       (kbd "{") (lambda () (interactive) (insert-pair ?\{ ?\}))
@@ -508,8 +519,6 @@ Setup escape to exit all popups and panels
     (setq projectile-indexing-method 'hybrid)
     (projectile-mode +1)
     (setq projectile-project-search-path '("~/dev"))
-    (projectile-register-project-type 'gitea '(".gitea")
-                      :compile "RHOST=hts-nms1 gmake install")
     :bind
     (("<leader> p" . 'projectile-command-map)))
 #+END_SRC
@@ -525,14 +534,22 @@ If re-enabling, check out an alternative is Neotree.
       :ensure t)
     (use-package treemacs-projectile
       :ensure t)
+    ; Move bottom-up searching to after top down so that it searches for git first rather than grabbing closests Cargo.toml
+    (setq projectile-project-root-functions 
+          '(projectile-root-local
+            projectile-root-marked
+            projectile-root-top-down
+            projectile-root-top-down-recurring
+            projectile-root-bottom-up
+            ))
     :bind
     (:map global-map
-	  ("M-0" . treemacs-select-window)
-	  ("C-x t 1"   . treemacs-delete-other-windows)
-	  ("C-x t t"   . treemacs)
-	  ("C-x t B"   . treemacs-bookmark)
-	  ("C-x t C-t" . treemacs-find-file)
-	  ("C-x t M-t" . treemacs-find-tag)))
+          ("M-0" . treemacs-select-window)
+          ("C-x t 1"   . treemacs-delete-other-windows)
+          ("C-x t t"   . treemacs)
+          ("C-x t B"   . treemacs-bookmark)
+          ("C-x t C-t" . treemacs-find-file)
+          ("C-x t M-t" . treemacs-find-tag)))
 #+END_SRC
 
 * Programming
@@ -592,6 +609,8 @@ or gcc) and c++ compiler (g++).
   	  ("C-c d" . eldoc)
   	  ("C-c f" . eglot-format-buffer)
             ("C-c e" . consult-flymake)
+            ("C-c n" . flymake-goto-next-error)
+            ("C-c p" . flymake-goto-prev-error)
   	  )
     )
 #+END_SRC
