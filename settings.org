@@ -534,14 +534,6 @@ If re-enabling, check out an alternative is Neotree.
       :ensure t)
     (use-package treemacs-projectile
       :ensure t)
-    ; Move bottom-up searching to after top down so that it searches for git first rather than grabbing closests Cargo.toml
-    (setq projectile-project-root-functions 
-          '(projectile-root-local
-            projectile-root-marked
-            projectile-root-top-down
-            projectile-root-top-down-recurring
-            projectile-root-bottom-up
-            ))
     :bind
     (:map global-map
           ("M-0" . treemacs-select-window)
