@@ -55,6 +55,10 @@
   (which-key-mode 1)
   (setq which-key-side-window-location '(right, bottom))
 #+END_SRC
+** Adjust behaviour of compile window
+#+BEGIN_SRC emacs-lisp
+  (setq compilation-scroll-output t)
+#+END_SRC
 * UI Changes
 ** Utility for installing system fonts
 Run the command "all-the-icons-install-fonts" to install the fonts to the system
@@ -290,6 +294,10 @@ Setup escape to exit all popups and panels
   (define-key global-map (kbd "C-j") '("Quickswitch to buffer 2" . (lambda () (interactive) (hb-harpoon-switch 1))))
   (define-key global-map (kbd "C-k") '("Quickswitch to buffer 3" . (lambda () (interactive) (hb-harpoon-switch 2))))
   (define-key global-map (kbd "C-l") '("Quickswitch to buffer 4" . (lambda () (interactive) (hb-harpoon-switch 3))))
+  (define-key global-map (kbd "C-S-h") '("Quickswitch to buffer 5" . (lambda () (interactive) (hb-harpoon-switch 4))))
+  (define-key global-map (kbd "C-S-j") '("Quickswitch to buffer 6" . (lambda () (interactive) (hb-harpoon-switch 5))))
+  (define-key global-map (kbd "C-S-k") '("Quickswitch to buffer 7" . (lambda () (interactive) (hb-harpoon-switch 6))))
+  (define-key global-map (kbd "C-S-l") '("Quickswitch to buffer 8" . (lambda () (interactive) (hb-harpoon-switch 7))))
 #+END_SRC
 *** Unbind competing keybinds from other modes
 #+BEGIN_SRC emacs-lisp
@@ -302,6 +310,9 @@ Setup escape to exit all popups and panels
   (setq compilation-environment '("TERM=xterm-256color"))
   (define-advice compilation-filter (:around (f proc string) xterm-color)
     (funcall f proc (xterm-color-filter string)))
+  (setq hb-blink-db-map (make-sparse-keymap))
+  (define-key hb-blink-db-map "r" '("Diesel Migration Redo" . (lambda () (interactive) (compile (format "cd %s/database && diesel migration redo" (projectile-project-root))))))
+  (define-key hb-blink-db-map "f" '("Diesel Migration Forward" . (lambda () (interactive) (compile (format "cd %s/database && diesel migration run" (projectile-project-root))))))
   (setq hb-blink-flutter-map (make-sparse-keymap))
   (define-key hb-blink-flutter-map "g" '("FRB Codegen" . (lambda () (interactive) (compile (format "cd %s/mobile && flutter_rust_bridge_codegen generate" (projectile-project-root))))))
   (setq hb-blink-run-map (make-sparse-keymap))
@@ -317,6 +328,7 @@ Setup escape to exit all popups and panels
   (define-key hb-blink-map "r" (cons "Run commands" hb-blink-run-map))
   (define-key hb-blink-map "w" (cons "Watch commands" hb-blink-watch-map))
   (define-key hb-blink-map "f" (cons "Flutter commands" hb-blink-flutter-map))
+  (define-key hb-blink-map "d" (cons "Database commands" hb-blink-db-map))
 #+END_SRC
 ** Evil package (VIM Emulation)
 #+BEGIN_SRC emacs-lisp
@@ -668,7 +680,7 @@ or gcc) and c++ compiler (g++).
     (add-hook 'flutter-test-mode-hook (lambda () (add-hook 'before-save-hook 'my-flutter-before-save nil 'make-it-local)))
     :hook
     (flutter-test-mode . company-mode)
-    :bind (:map hb-blink-map
+    :bind (:map hb-blink-flutter-map
   	      ("f" . #'my-flutter-run-or-hot-reload)))
   (use-package yaml-mode :ensure t)
 #+END_SRC
