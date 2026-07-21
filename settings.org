@@ -139,7 +139,7 @@ Setup escape to exit all popups and panels
   (define-key hb-file-map "f" '("Find file" . helm-find-files))
   (define-key hb-file-map "d" '("Open dired in folder of this file" . dired))
   (define-key hb-file-map "c" '("Open emacs config file" . (lambda () (interactive) (find-file (concat user-emacs-directory "settings.org")))))
-  (define-key hb-file-map "o" '("Open personal org file" . (lambda () (interactive) (find-file "~/DropBox/org/personal.org"))))
+  (define-key hb-file-map "o" '("Open personal org file" . (lambda () (interactive) (find-file "~/Dropbox/org/personal.org"))))
 #+END_SRC
 ** Buffer commands
 #+BEGIN_SRC emacs-lisp
