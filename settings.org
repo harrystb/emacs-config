@@ -316,6 +316,7 @@ Setup escape to exit all popups and panels
   (define-key hb-blink-db-map "f" '("Diesel Migration Forward" . (lambda () (interactive) (compile (format "cd %s/database && diesel migration run" (projectile-project-root))))))
   (setq hb-blink-flutter-map (make-sparse-keymap))
   (define-key hb-blink-flutter-map "g" '("FRB Codegen" . (lambda () (interactive) (compile (format "cd %s/mobile && flutter_rust_bridge_codegen generate" (projectile-project-root))))))
+  (define-key hb-blink-flutter-map "l" '("Compile App Localisations" . (lambda () (interactive) (compile (format "cd %s/mobile && flutter gen-l10n" (projectile-project-root))))))
   (setq hb-blink-run-map (make-sparse-keymap))
   (define-key hb-blink-run-map "c" '("Run custom" . (lambda (&optional cmd) (interactive "sBin Name:") (compile (format "cd %s && cargo run --bin %s" (projectile-project-root) cmd)))))
   (define-key hb-blink-run-map "r" '("Run routing" . (lambda () (interactive) (compile (format "cd %s && cargo run --bin routing" (projectile-project-root))))))
