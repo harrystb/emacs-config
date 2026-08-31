@@ -47,8 +47,12 @@
 #+END_SRC
 ** Setup font
 #+BEGIN_SRC emacs-lisp
-  (when (and (window-system) (x-list-fonts "JetBrainsMono NF"))
-    (set-frame-font "JetBrainsMono NF"))
+  (defun hb-setup-fonts ()
+    (when (x-list-fonts "JetBrainsMono NF")
+      (set-frame-font "JetBrainsMono NF")))
+  (if (daemonp)
+      (add-hook 'server-after-make-frame-hook 'hb-setup-fonts)
+    (hb-setup-fonts))
 #+END_SRC
 ** Enable which-key on pause
 #+BEGIN_SRC emacs-lisp
