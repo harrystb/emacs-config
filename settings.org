@@ -54,6 +54,18 @@
       (add-hook 'server-after-make-frame-hook 'hb-setup-fonts)
     (hb-setup-fonts))
 #+END_SRC
+** Fix windows based ssh
+#+BEGIN_SRC emacs-lisp
+  (when (eq system-type 'windows-nt)
+    ;; Get the tramp-methods variable populated
+    (require 'tramp)
+    ;; Add the '-tt' flag to the login arguments for "ssh" ONLY
+    (push '("-tt")
+          (cadr (assoc 'tramp-login-args
+                       (assoc "ssh" tramp-methods)))))
+  (when (eq system-type 'windows-nt)
+    (prefer-coding-system 'utf-8-unix))
+#+END_SRC
 ** Enable which-key on pause
 #+BEGIN_SRC emacs-lisp
   (which-key-mode 1)
@@ -318,6 +330,7 @@ Setup escape to exit all popups and panels
   (setq hb-blink-db-map (make-sparse-keymap))
   (define-key hb-blink-db-map "r" '("Diesel Migration Redo" . (lambda () (interactive) (compile (format "cd %s/database && diesel migration redo" (projectile-project-root))))))
   (define-key hb-blink-db-map "f" '("Diesel Migration Forward" . (lambda () (interactive) (compile (format "cd %s/database && diesel migration run" (projectile-project-root))))))
+  (define-key hb-blink-db-map "b" '("Diesel Migration Backward" . (lambda () (interactive) (compile (format "cd %s/database && diesel migration revert" (projectile-project-root))))))
   (setq hb-blink-flutter-map (make-sparse-keymap))
   (define-key hb-blink-flutter-map "g" '("FRB Codegen" . (lambda () (interactive) (compile (format "cd %s/mobile && flutter_rust_bridge_codegen generate" (projectile-project-root))))))
   (define-key hb-blink-flutter-map "l" '("Compile App Localisations" . (lambda () (interactive) (compile (format "cd %s/mobile && flutter gen-l10n" (projectile-project-root))))))
@@ -642,20 +655,21 @@ or gcc) and c++ compiler (g++).
     :after rust-mode
     :config
     (setq rustic-format-on-save t)
+    (setq rustic-rustfmt-args "--edition 2024")
     )
 #+END_SRC
 ** Rust (rust-mode/rust-ts-mode)
 #+BEGIN_SRC emacs-lisp
-  (use-package rust-mode
-    :ensure t
-    :init
-    (setq rust-mode-treesitter-derive t)
-    :config
-    (add-hook 'rust-mode-hook (lambda () (setq indent-tabs-mode nil)))
-    (add-hook 'rust-mode-hook 'electric-pair-local-mode)
-    (add-hook 'rust-mode-hook 'flycheck-mode)
-    (add-hook 'rust-mode-hook 'company-mode)
-    )
+    (use-package rust-mode
+      :ensure t
+      :init
+      (setq rust-mode-treesitter-derive t)
+      :config
+      (add-hook 'rust-mode-hook (lambda () (setq indent-tabs-mode nil)))
+      (add-hook 'rust-mode-hook 'electric-pair-local-mode)
+      (add-hook 'rust-mode-hook 'flycheck-mode)
+      (add-hook 'rust-mode-hook 'company-mode)
+      )
 #+END_SRC
 ** Flutter/Dart Packages
 #+BEGIN_SRC emacs-lisp
